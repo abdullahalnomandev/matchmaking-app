@@ -7,7 +7,22 @@ const createUserZodSchema = z.object({
     email: z.string({ required_error: 'Email is required' }).email('Invalid email format'),
     mobile: z.string().optional(),
     password: z.string({ required_error: 'Password is required' }).min(8, 'Password must be at least 8 characters'),
+    confirm_password: z.string().optional(),
     role: z.enum(['super_admin', 'admin', 'business_user', 'support_partner']).optional(),
+    
+    // Company / Business Info
+    company_legal_name: z.string().optional(),
+    company_location: z.string().optional(),
+    company_website: z.string().optional(),
+    country: z.string().optional(),
+    vat_number: z.string().optional(),
+    company_id_number: z.string().optional(),
+    business_object: z.string().optional(),
+    business_types: z.array(z.string()).optional(),
+    business_area: z.string().optional(),
+    experience: z.string().optional(),
+    positions: z.string().optional(),
+    annual_turnover: z.string().optional(),
   }),
 });
 
@@ -28,13 +43,13 @@ const updateUserZodSchema = z.object({
     // New fields from BRD
     vat_number: z.string().optional(),
     company_id_number: z.string().optional(),
+    company_name: z.string().optional(),
     company_legal_name: z.string().optional(),
-    company_website: z.string().url().optional(),
+    company_website: z.string().optional(),
     
     experience: z.nativeEnum(BUSINESS_EXPERIENCE).optional(),
-    positions: z.array(z.nativeEnum(COMPANY_POSITION)).optional(),
-    
-    preferences: z.array(z.string()).optional(),
+    positions: z.nativeEnum(COMPANY_POSITION).optional(),
+    business_types: z.array(z.string()).optional(),
   }),
 });
 

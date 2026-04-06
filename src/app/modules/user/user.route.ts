@@ -5,22 +5,8 @@ import fileUploadHandler from '../../middlewares/fileUploadHandler';
 import validateRequest from '../../middlewares/validateRequest';
 import { UserController } from './user.controller';
 import { UserValidation } from './user.validation';
-import { BlockRoutes } from './block/block.route';
 const router = express.Router();
 
-router.post(
-  '/psychological-scores',
-  auth(USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER),
-  validateRequest(UserValidation.updatePsychologicalScoresZodSchema),
-  UserController.updatePsychologicalScores
-);
-
-router.post(
-  '/personality-result',
-  auth(USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER),
-  validateRequest(UserValidation.updatePersonalityResultZodSchema),
-  UserController.updatePersonalityResult
-);
 
 router
   .route('/profile')
@@ -33,14 +19,9 @@ router
   );
 
 router
-  .route('/delete')
-  .delete(auth(USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER, USER_ROLES.SUPER_ADMIN), UserController.deleteAccount)
-
-router
   .route('/')
   .get(auth(USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER, USER_ROLES.SUPER_ADMIN), UserController.getAllUsers)
   .post(
-    validateRequest(UserValidation.createUserZodSchema),
     UserController.createUser
   );
 
@@ -52,54 +33,17 @@ router
   );
 
 router
-  .route('/profile/activity/:id')
+  .route('/matchable-users')
   .get(
     auth(USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER, USER_ROLES.SUPER_ADMIN),
-    UserController.getUserActivity
+    UserController.getMatchableUsers
   );
 
-router
-  .route('/unfollow/:id')
+router.route('/change-password')
   .post(
-    auth(USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER, USER_ROLES.SUPER_ADMIN),
-    UserController.unfollowUser
+    auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER),
+    UserController.changePassword
   );
 
-router
-  .route('')
-  .post(
-    auth(USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER, USER_ROLES.SUPER_ADMIN),
-    UserController.toggleProfileUpdate
-  );
-
-router
-  .route('/status/toggle-profile-status/:id')
-  .post(
-    auth(USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER, USER_ROLES.SUPER_ADMIN),
-    UserController.toggleProfileUpdate
-  );
-
-router
-  .route('/statistics')
-  .get(
-    auth(USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER, USER_ROLES.SUPER_ADMIN),
-    UserController.getStatistics
-  );
-
-router
-  .route('/user-statistics')
-  .get(
-    auth(USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER, USER_ROLES.SUPER_ADMIN),
-    UserController.UserStatistics
-  );
-
-
-router
-  .route('/delete-account')
-  .delete(UserController.UserDeleteAccount);
-
-  // User Blocks
-
-router.use('/blocks',BlockRoutes)
 
 export const UserRoutes = router;

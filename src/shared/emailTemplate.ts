@@ -14,7 +14,7 @@ const createAccount = (values: ICreateAccount) => {
   <title>Verify Your Account</title>
 </head>
 <body style="font-family: 'Inter', Arial, sans-serif; background: #f7f8fa; margin: 0; padding: 0;">
-  <div style="max-width: 440px; margin: 40px auto; background: #111132; border-radius: 18px; padding: 38px 26px 32px 26px; box-shadow: 0 8px 24px rgba(0,0,0,0.13); text-align: center;">
+  <div style="max-width: 440px; margin: 40px auto;  border-radius: 18px; padding: 38px 26px 32px 26px; box-shadow: 0 8px 24px rgba(0,0,0,0.13); text-align: center;">
     <!-- Title -->
     <h1 style="color: #fff; font-size: 22px; font-weight: 700; margin: 0 0 18px 0; letter-spacing: 0.5px;">
       Verify Your Account
@@ -28,7 +28,7 @@ const createAccount = (values: ICreateAccount) => {
       Thank you for signing up! Please use the verification code below to activate your account.
     </p>
     <!-- OTP Code Box -->
-    <div style="display: inline-block; background: #6C2FF9; color: #fff; font-size: 28px; font-weight: 700; letter-spacing: 8px; padding: 18px 0; width: 170px; border-radius: 12px; box-shadow: 0 2px 8px rgba(108,47,249,0.13); margin-bottom: 28px;">
+    <div style="display: inline-block; background: #3466A7; color: #fff; font-size: 28px; font-weight: 700; letter-spacing: 8px; padding: 18px 0; width: 170px; border-radius: 12px; box-shadow: 0 2px 8px rgba(108,47,249,0.13); margin-bottom: 28px;">
       ${values.otp}
     </div>
     <!-- Expiration Note -->

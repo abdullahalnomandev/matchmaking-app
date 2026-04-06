@@ -75,8 +75,8 @@ const resendEmail = catchAsync(async (req: Request, res: Response) => {
 });
 
 const verifyOTPToDb = catchAsync(async (req: Request, res: Response) => {
-  const {email, otp} = req.body;
-  await AuthService.verifyOTP(email,otp);
+  const { otp} = req.body;
+  await AuthService.verifyOTP(otp);
 
   sendResponse(res, {
     success: true,

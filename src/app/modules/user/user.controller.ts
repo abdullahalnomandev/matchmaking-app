@@ -6,37 +6,17 @@ import { getSingleFilePath } from '../../../shared/getFilePath';
 import pick from '../../../shared/pick';
 import sendResponse from '../../../shared/sendResponse';
 import { UserService } from './user.service';
+import { UserMatchService } from './user.match.service';
 
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const {
-      name,
-      mobile,
-      email,
-      password,
-      confirm_password,
-      google_id_token,
-      auth_provider,
-    } = req.body;
+    const result = await UserService.createUserToDB(req.body);
 
-    const result = await UserService.createUserToDB({
-      name,
-      mobile,
-      email,
-      password,
-      confirm_password,
-      google_id_token,
-      auth_provider,
-    });
-    const responseData = auth_provider === 'local' ? undefined : result;
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message:
-        auth_provider === 'local'
-          ? 'User created successfully. Please verify your email.'
-          : 'User created successfully',
-      ...(responseData && { data: responseData }), // Only include data if not local
+      message: 'User created successfully. Please verify your email with the OTP sent.',
+      data: result,
     });
   }
 );
@@ -94,19 +74,7 @@ const updateProfile = catchAsync(
   }
 );
 
-// Add unfollowUser
-const unfollowUser = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user?.id;
-  const targetId = req.params.id;
 
-  await UserService.unfollowUser(userId, targetId);
-
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: 'Successfully unfollowed the user.',
-  });
-});
 
 // Add getUserProfileById
 const getUserProfileById = catchAsync(async (req: Request, res: Response) => {
@@ -126,126 +94,40 @@ const getUserProfileById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getUserActivity = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user?.id;
-  const requestUserId = req.params?.id;
 
-  const result = await UserService.getUserActivityFromDB(
-    requestUserId,
-    userId,
-    req.query
-  );
-
+const getMatchableUsers = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user as { role: string; id: string };
+  const result = await UserMatchService.getMatchableUsers(user,req?.query);
+  
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: 'Activity list retrieved successfully',
-    pagination: result.pagination,
-    data: result.data,
+    message: 'Matchable users retrieved successfully',
+    pagination: result?.meta,
+    data: result?.data,
   });
 });
 
-const getStatistics = catchAsync(async (req: Request, res: Response) => {
-  const result = await UserService.statistics();
 
+const changePassword = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+  const result = await UserService.changePassword(user, req.body);
+  
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: 'User Statistics retrieved successfully',
+    message: 'Password changed successfully',
     data: result,
   });
 });
 
-const UserStatistics = catchAsync(async (req: Request, res: Response) => {
-  const year = Number(req.query?.year) || new Date().getFullYear();
-  const userId = req?.user?.id;
-  const result = await UserService.getUserStatistics(year, userId);
-
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: 'User Statistics retrieved successfully',
-    data: result,
-  });
-});
-
-const toggleProfileUpdate = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.params.id;
-  const result = await UserService.toggleProfileUpdate(userId);
-
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: 'User profile update status toggled successfully',
-    data: result,
-  });
-});
-
-// Default account deletion for logged-in user via req.user + password (kept old version)
-const deleteAccount = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user?.id;
-  const password = req.body?.password;
-  const result = await UserService.deleteAccount(password, userId);
-
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: 'User account deleted successfully',
-    data: result,
-  });
-});
-
-// New controller for deleting account using email and password for body-based deletion
-const UserDeleteAccount = catchAsync(async (req: Request, res: Response) => {
-  const email = req.body?.email;
-  const password = req.body?.password;
-  const result = await UserService.willBeDeleteUser(email, password);
-
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: 'User account deleted successfully by email',
-    data: result,
-  });
-});
-
-const updatePsychologicalScores = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user?.id;
-  const result = await UserService.updatePsychologicalScores(userId, req.body);
-
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: 'Psychological scores updated successfully',
-    data: result,
-  });
-});
-
-const updatePersonalityResult = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user?.id;
-  const result = await UserService.updatePersonalityResult(userId, req.body);
-
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: 'Personality result updated successfully',
-    data: result,
-  });
-});
 
 export const UserController = {
   createUser,
   getUserProfile,
   updateProfile,
-  unfollowUser,
   getAllUsers,
   getUserProfileById,
-  getUserActivity,
-  UserStatistics,
-  getStatistics,
-  toggleProfileUpdate,
-  deleteAccount,
-  UserDeleteAccount, // Export new delete by email controller
-  updatePsychologicalScores,
-  updatePersonalityResult,
+  getMatchableUsers,
+  changePassword,
 };

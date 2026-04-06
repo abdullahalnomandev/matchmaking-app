@@ -1,7 +1,7 @@
 export enum BUSINESS_OBJECT {
-  PRODUCTS = 'Products',
-  SERVICES = 'Services',
-  PRODUCTS_SERVICES = 'Products & Services',
+  PRODUCTS = 'products',
+  SERVICES = 'services',
+  PRODUCTS_SERVICES = 'products_and_services',
 }
 
 export enum BUSINESS_TYPE {
@@ -49,25 +49,25 @@ export enum BUSINESS_AREA {
 }
 
 export enum BUSINESS_EXPERIENCE {
-  ZERO_TWO = '0-2 years',
-  THREE_FIVE = '3-5 years',
-  SIX_TEN = '6-10 years',
-  ELEVEN_TWENTY = '11-20 years',
-  TWENTY_PLUS = '20+ years',
+  ZERO_TWO = 'zero_two',
+  THREE_FIVE = 'three_five',
+  SIX_TEN = 'six_ten',
+  ELEVEN_TWENTY = 'eleven_twenty',
+  TWENTY_PLUS = 'twenty_plus',
 }
 
 export enum COMPANY_POSITION {
-  FOUNDER = 'Founder',
-  CO_FOUNDER = 'Co-Founder',
-  CEO = 'CEO',
-  MANAGING_DIRECTOR = 'Managing Director',
-  PARTNER = 'Partner',
-  BOARD_MEMBER = 'Board Member',
-  INVESTOR = 'Investor',
-  COO = 'COO',
-  CFO = 'CFO',
-  CTO = 'CTO',
-  ADVISOR = 'Advisor',
+  FOUNDER = 'founder',
+  CO_FOUNDER = 'co_founder',
+  CEO = 'ceo',
+  MANAGING_DIRECTOR = 'managing_director',
+  PARTNER = 'partner',
+  BOARD_MEMBER = 'board_member',
+  INVESTOR = 'investor',
+  COO = 'coo',
+  CFO = 'cfo',
+  CTO = 'cto',
+  ADVISOR = 'advisor',
 }
 
 export enum USER_RANK {

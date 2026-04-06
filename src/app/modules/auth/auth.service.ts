@@ -15,7 +15,6 @@ import { User } from '../user/user.model';
 import { IUser } from '../user/user.interface';
 import generateOTP from '../../../util/generateOTP';
 import { ICreateAccount } from '../../../types/emailTamplate';
-import { updateUserAccessFeature } from '../../../util/updateUserAccessFeature';
 
 //login
 const loginUserFromDB = async (payload: ILoginData) => {
@@ -48,8 +47,6 @@ const loginUserFromDB = async (payload: ILoginData) => {
   }
 
   // update canAccessFeature
-  await updateUserAccessFeature(userInfo._id as any);
-
   //create token
   const createToken = jwtHelper.createToken(
     { id: userInfo._id, role: userInfo.role, email: userInfo.email },
@@ -144,7 +141,6 @@ const verifyEmailToDB = async (otp: string) => {
     },
     { new: true }
   );
-  await updateUserAccessFeature(registeredUser?._id as any);
 
   //create token
   const createToken = jwtHelper.createToken(
@@ -288,9 +284,10 @@ const resendEmailToDB = async (email: string) => {
   return { message: 'OTP resend successfully' };
 };
 
-const verifyOTP = async (email: string, otp: string) => {
-  const registeredUser = await User.findOne({ email }).lean();
+const verifyOTP = async (otp: string) => {
+  const registeredUser = await User.findOne({ 'authorization.oneTimeCode': otp }).lean();
 
+  console.log(otp);
   if (!registeredUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'User not found');
   }
@@ -308,7 +305,7 @@ const verifyOTP = async (email: string, otp: string) => {
     registeredUser.authorization.oneTimeCode !== otp ||
     registeredUser.authorization.expireAt < new Date()
   ) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid or expired OTP');
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'OTP is expired');
   }
 
   return { message: 'OTP is valid' };
