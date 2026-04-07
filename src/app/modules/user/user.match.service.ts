@@ -370,6 +370,48 @@ const getMatchableUsers = async (currentUser: {
   }
 };
 
+
+
+const getMatchCount = async (currentUser: {
+  role: string;
+  id: string;
+}): Promise<any> => {
+  try {
+    // Get current user details
+    const userProfile = await User.findById(currentUser.id).lean();
+    if (!userProfile) {
+      throw new Error('User not found');
+    }
+    
+    // Get all other users with same role
+    const potentialMatches = await User.find({
+      role: currentUser.role,
+      _id: { $ne: currentUser.id }
+    }).lean();
+    
+    // Calculate match scores for all potential matches
+    const matchResults = potentialMatches.map(user => 
+      calculateMatchScore(userProfile, user)
+    );
+    
+    // Count eligible matches (>=70%)
+    const eligibleMatches = matchResults.filter(match => match.matchPercentage >= 70);
+    
+    // Count average matches (<70%)
+    const averageMatches = matchResults.filter(match => match.matchPercentage < 70);
+    
+    return {
+      eligibleMatchesCount: eligibleMatches.length,
+      averageMatchCount: averageMatches.length,
+      totalMatches: matchResults.length
+    };
+  } catch (error) {
+    console.error('Error in getMatchCount:', error);
+    throw error;
+  }
+};
+
 export const UserMatchService = {
-  getMatchableUsers
+  getMatchableUsers,
+  getMatchCount
 };

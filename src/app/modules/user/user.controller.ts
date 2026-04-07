@@ -122,12 +122,25 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
 });
 
 
+const getMatchCount = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user as { role: string; id: string };
+  const result = await UserMatchService.getMatchCount(user);
+  
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Match count retrieved successfully',
+    data: result,
+  });
+});
+
 export const UserController = {
   createUser,
+  getAllUsers,
   getUserProfile,
   updateProfile,
-  getAllUsers,
   getUserProfileById,
   getMatchableUsers,
   changePassword,
+  getMatchCount,
 };
