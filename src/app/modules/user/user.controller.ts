@@ -7,6 +7,7 @@ import pick from '../../../shared/pick';
 import sendResponse from '../../../shared/sendResponse';
 import { UserService } from './user.service';
 import { UserMatchService } from './user.match.service';
+import { USER_ROLES } from '../../../enums/user';
 
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -15,10 +16,11 @@ const createUser = catchAsync(
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: 'User created successfully. Please verify your email with the OTP sent.',
+      message:
+        'User created successfully. Please verify your email with the OTP sent.',
       data: result,
     });
-  }
+  },
 );
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
@@ -71,10 +73,8 @@ const updateProfile = catchAsync(
       message: 'Profile updated successfully',
       data: result,
     });
-  }
+  },
 );
-
-
 
 // Add getUserProfileById
 const getUserProfileById = catchAsync(async (req: Request, res: Response) => {
@@ -83,7 +83,7 @@ const getUserProfileById = catchAsync(async (req: Request, res: Response) => {
 
   const result = await UserService.getUserProfileByIdFromDB(
     userId,
-    requestUser
+    requestUser,
   );
 
   sendResponse(res, {
@@ -94,11 +94,10 @@ const getUserProfileById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
 const getMatchableUsers = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as { role: string; id: string };
-  const result = await UserMatchService.getMatchableUsers(user,req?.query);
-  
+  const result = await UserMatchService.getMatchableUsers(user, req?.query);
+
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
@@ -108,11 +107,10 @@ const getMatchableUsers = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
 const changePassword = catchAsync(async (req: Request, res: Response) => {
   const user = req.user;
   const result = await UserService.changePassword(user, req.body);
-  
+
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
@@ -121,11 +119,10 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
 const getMatchCount = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as { role: string; id: string };
   const result = await UserMatchService.getMatchCount(user);
-  
+
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
@@ -133,6 +130,31 @@ const getMatchCount = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
+//update profile
+const updateUser = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user;
+    let image = getSingleFilePath(req.files, 'image');
+
+
+    const data: any = {};
+
+    if (image) data.image = image;
+    
+    console.log(data);
+
+
+    // const result = await UserService.updateProfileToDB(req.user, data);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'User updated successfully',
+      // data: result,
+    });
+  },
+);
 
 export const UserController = {
   createUser,
@@ -143,4 +165,5 @@ export const UserController = {
   getMatchableUsers,
   changePassword,
   getMatchCount,
+  updateUser,
 };

@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { NextFunction } from 'express';
 import { USER_ROLES } from '../../../enums/user';
 import auth from '../../middlewares/auth';
 import fileUploadHandler from '../../middlewares/fileUploadHandler';
@@ -7,54 +7,101 @@ import { UserController } from './user.controller';
 import { UserValidation } from './user.validation';
 const router = express.Router();
 
-
 router
   .route('/profile')
-  .get(auth(USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER, USER_ROLES.SUPER_ADMIN), UserController.getUserProfile)
+  .get(
+    auth(
+      USER_ROLES.ADMIN,
+      USER_ROLES.BUSINESS_USER,
+      USER_ROLES.SUPPORT_PARTNER,
+      USER_ROLES.SUPER_ADMIN,
+    ),
+    UserController.getUserProfile,
+  )
   .patch(
-    auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER),
+    auth(
+      USER_ROLES.SUPER_ADMIN,
+      USER_ROLES.ADMIN,
+      USER_ROLES.BUSINESS_USER,
+      USER_ROLES.SUPPORT_PARTNER,
+    ),
     fileUploadHandler(),
     validateRequest(UserValidation.updateUserZodSchema),
-    UserController.updateProfile
+    UserController.updateProfile,
   );
 
 router
   .route('/')
-  .get(auth(USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER, USER_ROLES.SUPER_ADMIN), UserController.getAllUsers)
-  .post(
-    UserController.createUser
-  );
+  .get(
+    auth(
+      USER_ROLES.ADMIN,
+      USER_ROLES.BUSINESS_USER,
+      USER_ROLES.SUPPORT_PARTNER,
+      USER_ROLES.SUPER_ADMIN,
+    ),
+    UserController.getAllUsers,
+  )
+  .post(UserController.createUser);
+
+router.patch(
+  '/:id',
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+  fileUploadHandler(),
+  auth(
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.ADMIN,
+    USER_ROLES.BUSINESS_USER,
+    USER_ROLES.SUPPORT_PARTNER,
+  ),
+  UserController.updateUser,
+);
 
 router
   .route('/profile/user/:id')
   .get(
-    auth(USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER, USER_ROLES.SUPER_ADMIN),
-    UserController.getUserProfileById
+    auth(
+      USER_ROLES.ADMIN,
+      USER_ROLES.BUSINESS_USER,
+      USER_ROLES.SUPPORT_PARTNER,
+      USER_ROLES.SUPER_ADMIN,
+    ),
+    UserController.getUserProfileById,
   );
 
 router
   .route('/matchable-users')
   .get(
-    auth(USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER, USER_ROLES.SUPER_ADMIN),
-    UserController.getMatchableUsers
+    auth(
+      USER_ROLES.ADMIN,
+      USER_ROLES.BUSINESS_USER,
+      USER_ROLES.SUPPORT_PARTNER,
+      USER_ROLES.SUPER_ADMIN,
+    ),
+    UserController.getMatchableUsers,
   );
 
-router.route('/match-count')
-  .get(
-    auth(USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER, USER_ROLES.SUPER_ADMIN),
-    UserController.getMatchCount
-  );
-
-router.route('/change-password')
+router
+  .route('/change-password')
   .post(
-    auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER),
-    UserController.changePassword
+    auth(
+      USER_ROLES.SUPER_ADMIN,
+      USER_ROLES.ADMIN,
+      USER_ROLES.BUSINESS_USER,
+      USER_ROLES.SUPPORT_PARTNER,
+    ),
+    UserController.changePassword,
   );
 
-router.route('/match-count')
+router
+  .route('/match-count')
   .get(
-    auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.BUSINESS_USER, USER_ROLES.SUPPORT_PARTNER),
-    UserController.getMatchCount
+    auth(
+      USER_ROLES.SUPER_ADMIN,
+      USER_ROLES.ADMIN,
+      USER_ROLES.BUSINESS_USER,
+      USER_ROLES.SUPPORT_PARTNER,
+    ),
+    UserController.getMatchCount,
   );
 
 export const UserRoutes = router;

@@ -8,6 +8,8 @@ import { SupportRoutes } from '../app/modules/support/support.route';
 import { QuestionRoutes } from '../app/modules/question/question.route';
 import { QuestionCategoryRoutes } from '../app/modules/questionCategory/questionCategory.route';
 import { FaqRoutes } from '../app/modules/faq/faq.route';
+import { SettingsRoutes } from '../settings/settings.route';
+import { NewsletterRoutes } from '../app/modules/newsletter/newsletter.route';
 
 const router = express.Router();
 
@@ -47,6 +49,14 @@ const apiRoutes = [
   {
     path: '/faq',
     route: FaqRoutes,
+  },
+  {
+    path: '/settings',
+    route: SettingsRoutes,
+  },
+  {
+    path: '/newsletter',
+    route: NewsletterRoutes,
   },
 ];
 

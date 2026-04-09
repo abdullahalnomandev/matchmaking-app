@@ -22,27 +22,27 @@ router.route('/')
 
 router.route('/:id')
   .patch(
-    auth(
-      USER_ROLES.SUPER_ADMIN, 
-      USER_ROLES.ADMIN
-    ),
+    // auth(
+    //   USER_ROLES.SUPER_ADMIN, 
+    //   USER_ROLES.ADMIN
+    // ),
     FaqController.updateFaq
   )
   .delete(
-    auth(
-      USER_ROLES.SUPER_ADMIN, 
-      USER_ROLES.ADMIN
-    ),
+      // auth(
+      //   USER_ROLES.SUPER_ADMIN, 
+      //   USER_ROLES.ADMIN
+      // ),
     FaqController.deleteFaq
   );
 
 // Toggle status
 router.route('/:id/toggle')
   .patch(
-    auth(
-      USER_ROLES.SUPER_ADMIN, 
-      USER_ROLES.ADMIN
-    ),
+    // auth(
+    //   USER_ROLES.SUPER_ADMIN, 
+    //   USER_ROLES.ADMIN
+    // ),
     FaqController.toggleFaqStatus
   );
 

@@ -277,6 +277,13 @@ const getMatchableUsers = async (currentUser: {
       _id: { $ne: currentUser.id }
     });
     
+    // Apply search filter for company_legal_name using regex
+    if (query?.searchTerm) {
+      userQuery = userQuery.where('company_legal_name').regex(
+        new RegExp(query.searchTerm, 'i') // Case-insensitive regex search
+      );
+    }
+    
     // Apply filters from query parameters
     if (query?.business_area) {
       userQuery = userQuery.where('business_area').equals(query.business_area);
@@ -290,8 +297,8 @@ const getMatchableUsers = async (currentUser: {
       userQuery = userQuery.where('experience').equals(query.experience);
     }
     
+    // Apply rank_level filter if provided
     if (query?.rank_level) {
-      // Filter by rank level (need to calculate rank first)
       const allUsers = await userQuery.lean();
       const filteredUsers = allUsers.filter(user => {
         const rankScore = (user.ranking_score?.psychological || 0) +
