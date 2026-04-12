@@ -28,15 +28,8 @@ const createNewsletter = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllNewsletters = catchAsync(async (req: Request, res: Response) => {
-  const filters = {
-    search: req.query.search as string,
-    isActive: req.query.isActive === 'true' ? true : req.query.isActive === 'false' ? false : undefined,
-    createdBy: req.query.createdBy as string,
-    page: parseInt(req.query.page as string) || 1,
-    limit: parseInt(req.query.limit as string) || 10
-  };
-  
-  const result = await NewsletterService.getAllNewslettersFromDB(filters);
+
+  const result = await NewsletterService.getAllNewslettersFromDB(req.query as Record<string, unknown>, req.user?.id || '');
   
   sendResponse(res, {
     success: true,

@@ -10,6 +10,7 @@ import { QuestionCategoryRoutes } from '../app/modules/questionCategory/question
 import { FaqRoutes } from '../app/modules/faq/faq.route';
 import { SettingsRoutes } from '../settings/settings.route';
 import { NewsletterRoutes } from '../app/modules/newsletter/newsletter.route';
+import { WebinarRoutes } from '../app/modules/webinar/webinar.route';
 
 const router = express.Router();
 
@@ -57,6 +58,10 @@ const apiRoutes = [
   {
     path: '/newsletter',
     route: NewsletterRoutes,
+  },
+  {
+    path: '/webinar',
+    route: WebinarRoutes,
   },
 ];
 

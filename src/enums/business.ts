@@ -70,32 +70,94 @@ export const SUPPORT_TO_BUSINESS_MAP: Record<string, string[]> = {
     'consulting_advisory',
     'legal_services',
     'accounting_audit',
+    'financial_services',
   ],
+
   legal_advisory: ['legal_services'],
   contract_law: ['legal_services'],
-  corporate_governance: ['consulting_advisory', 'financial_services'],
-  financial_advisory: ['financial_services', 'accounting_audit'],
+
+  corporate_governance: [
+    'consulting_advisory',
+    'financial_services',
+    'public_admin_ngo',
+  ],
+
+  financial_advisory: ['financial_services', 'accounting_audit', 'insurance'],
+
   accounting_and_tax: ['accounting_audit'],
+
   m_and_a_partnerships: ['financial_services', 'consulting_advisory'],
+
   fundraising_and_investment: ['financial_services'],
+
   hr_and_recruitment: ['hr_recruitment'],
+
   payroll_and_compliance: ['hr_recruitment', 'accounting_audit'],
-  operations_and_process_optimization: ['consulting_advisory', 'it_software'],
+
+  operations_and_process_optimization: [
+    'consulting_advisory',
+    'it_software',
+    'manufacturing',
+    'construction',
+  ],
+
   supply_chain_management: [
     'manufacturing',
     'transportation',
     'wholesale_retail',
+    'maritime_shipping',
   ],
-  it_and_cybersecurity: ['it_software', 'telecommunications'],
-  digital_transformation: ['it_software', 'consulting_advisory'],
-  ai_and_automation: ['it_software', 'ai_data_analytics'],
+
+  it_and_cybersecurity: [
+    'it_software',
+    'telecommunications',
+    'security_surveillance',
+  ],
+
+  digital_transformation: [
+    'it_software',
+    'consulting_advisory',
+    'ai_data_analytics',
+  ],
+
+  ai_and_automation: [
+    'it_software',
+    'ai_data_analytics',
+    'web3_blockchain',
+    'research_development',
+  ],
+
   marketing_and_sales_strategy: [
     'marketing_advertising',
     'ecommerce_marketplaces',
+    'consumer_goods',
+    'food_beverage',
+    'fashion_apparel',
   ],
-  branding_and_positioning: ['marketing_advertising'],
-  international_expansion: ['consulting_advisory', 'financial_services'],
-  risk_management: ['financial_services', 'insurance'],
-  crisis_management: ['consulting_advisory', 'risk_management'],
-  esg_and_sustainability: ['environmental_services'],
+
+  branding_and_positioning: ['marketing_advertising', 'media_entertainment'],
+
+  international_expansion: [
+    'consulting_advisory',
+    'financial_services',
+    'transportation',
+    'tourism_hospitality',
+  ],
+
+  risk_management: ['financial_services', 'insurance', 'security_surveillance'],
+
+  crisis_management: ['consulting_advisory', 'public_admin_ngo'],
+
+  esg_and_sustainability: [
+    'environmental_services',
+    'waste_management',
+    'energy',
+    'agriculture',
+    'mining_resources',
+    'aerospace_defense',
+    'automotive_mobility',
+    'healthcare',
+    'pharmaceuticals',
+    'education_training',
+  ],
 };

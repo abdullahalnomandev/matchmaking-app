@@ -1,7 +1,10 @@
 import { Newsletter } from './newsletter.model';
-import { INewsletter, INewsletterFilters } from './newsletter.interface';
+import { INewsletter } from './newsletter.interface';
 import ApiError from '../../../errors/ApiError';
 import { StatusCodes } from 'http-status-codes';
+import QueryBuilder from '../../builder/QueryBuilder';
+import { User } from '../user/user.model';
+import { SUPPORT_TO_BUSINESS_MAP } from '../../../enums/business';
 
 const createNewsletterToDB = async (
   payload: Partial<INewsletter>,
@@ -14,47 +17,54 @@ const createNewsletterToDB = async (
 };
 
 const getAllNewslettersFromDB = async (
-  filters: INewsletterFilters,
+  query: Record<string, unknown>,
+  userId: string
 ): Promise<{ data: INewsletter[]; meta: any }> => {
-  const { search, isActive, createdBy, page = 1, limit = 10 } = filters;
-
-  // Build query
-  let query: any = {};
-
-    if (isActive !== undefined) {
-      query.isActive = isActive;
+  const user = await User.findById(userId, 'business_area')
+  console.log('businessare',user)
+  
+  // Set default filter for active newsletters
+  query.isActive = true;
+  
+  // Add business area filtering if user has business_area
+  if (user?.business_area) {
+    const relevantSupportAreas: string[] = [];
+    
+    // Find all support areas that match user's business area
+    Object.entries(SUPPORT_TO_BUSINESS_MAP).forEach(([supportArea, businessAreas]) => {
+      if (user.business_area && businessAreas.includes(user.business_area)) {
+        relevantSupportAreas.push(supportArea);
+      }
+    });
+    
+    // If we found relevant support areas, filter newsletters by creators in those areas
+    if (relevantSupportAreas.length > 0) {
+      // Get users who have business areas that can provide support to current user
+      const supportingUsers = await User.find({
+        business_area: { $in: relevantSupportAreas }
+      }).select('_id');
+      
+      const supportingUserIds = supportingUsers.map(u => u._id);
+      
+      // Filter newsletters to only show those created by users in relevant support areas
+      query.createdBy = { $in: supportingUserIds };
     }
+  }
+  
+  const queryBuilder = new QueryBuilder(Newsletter.find(), query)
+    .search(['title', 'content'])
+    .filter()
+    .paginate()
+    .sort()
+    .fields();
 
-    if (createdBy) {
-      query.createdBy = createdBy;
-    }
+  const result = await queryBuilder.modelQuery.populate('createdBy', 'name email business_area');
+  const meta = await queryBuilder.getPaginationInfo();
 
-    if (search) {
-      query.$text = { $search: search };
-    }
-
-    // Count total documents
-    const total = await Newsletter.countDocuments(query);
-
-    // Get paginated results
-    const skip = (page - 1) * limit;
-    const newsletters = await Newsletter.find(query)
-      .populate('createdBy', 'name email')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const meta = {
-      total,
-      page,
-      limit,
-      totalPage: Math.ceil(total / limit),
-    };
-
-    return {
-      data: newsletters,
-      meta,
-    };
+  return {
+    data: result,
+    meta,
+  };
 };
 
 const getNewsletterByIdFromDB = async (
@@ -62,7 +72,7 @@ const getNewsletterByIdFromDB = async (
 ): Promise<INewsletter | null> => {
     const newsletter = await Newsletter.findById(id).populate(
       'createdBy',
-      'name email',
+      'name email business_area',
     );
     return newsletter;
 };
