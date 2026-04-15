@@ -28,9 +28,9 @@ export const getWeightForTurnover = (turnover: string) => {
 };
 
 export const userRank = (score: number) => {
-  if (score >= 90) return 'elite';
-  if (score >= 80) return 'platinum';
-  if (score >= 70) return 'gold';
-  if (score >= 50) return 'silver';
+  if (score >= 91) return 'elite';
+  if (score >= 76) return 'platinum';
+  if (score >= 61) return 'gold';
+  if (score >= 41) return 'silver';
   return 'bronze';
 };

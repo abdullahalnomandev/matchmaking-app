@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 import { SUPPORT_AREA } from '../../../enums/business';
+import { WebinarStatus, WebinarType } from './webinar.constant';
 
 export interface IWebinar {
   _id?: Types.ObjectId;
@@ -7,7 +8,7 @@ export interface IWebinar {
   description: string;
   creator: Types.ObjectId;
   supportArea: SUPPORT_AREA;
-  type: 'LIVE' | 'RECORDING';
+  type: WebinarType;
   
   // LIVE specific fields
   meetingUrl?: string;
@@ -18,7 +19,9 @@ export interface IWebinar {
   videoUrl?: string;
   
   // SYSTEM STATUS
-  status: 'scheduled' | 'live' | 'completed';
+  status: WebinarStatus;
+
+  image?: string;
   
   // SETTINGS
   commentsEnabled: boolean;
@@ -32,7 +35,7 @@ export interface IWebinarFilters {
   search?: string;
   supportArea?: string;
   type?: 'LIVE' | 'RECORDING';
-  status?: 'scheduled' | 'live' | 'completed';
+  status?: 'upcoming' | 'recorded' | 'completed' | 'live';
   creator?: string;
   isPublished?: boolean;
   page?: number;

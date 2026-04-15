@@ -5,12 +5,12 @@ import { StatusCodes } from 'http-status-codes';
 import QueryBuilder from '../../builder/QueryBuilder';
 import { User } from '../user/user.model';
 import { SUPPORT_TO_BUSINESS_MAP } from '../../../enums/business';
+import { Company } from '../company/company.model';
 
 const createNewsletterToDB = async (
   payload: Partial<INewsletter>,
 ): Promise<INewsletter> => {
-
-  console.log("payload",payload)
+  console.log('payload', payload);
   const newsletter = await Newsletter.create(payload);
 
   return newsletter;
@@ -18,47 +18,51 @@ const createNewsletterToDB = async (
 
 const getAllNewslettersFromDB = async (
   query: Record<string, unknown>,
-  userId: string
+  userId: string,
 ): Promise<{ data: INewsletter[]; meta: any }> => {
-  const user = await User.findById(userId, 'business_area')
-  console.log('businessare',user)
+  const companies = await Company.find({ owner: userId }, 'business_area');
+  console.log('Found companies for user', userId, ':', companies.length);
   
-  // Set default filter for active newsletters
-  query.isActive = true;
-  
-  // Add business area filtering if user has business_area
-  if (user?.business_area) {
-    const relevantSupportAreas: string[] = [];
+  const filterArea: string[] = [];
+
+  companies.forEach((company) => {
+    console.log('Company data:', company);
+    if (!company.business_area) {
+      console.log('Skipping company - no business area:', company._id);
+      return; // Skip if no business area
+    }
     
-    // Find all support areas that match user's business area
+    const businessArea = company.business_area;
+    console.log('Processing business area:', businessArea);
+    
+    // Find all support areas that are relevant to this business area
     Object.entries(SUPPORT_TO_BUSINESS_MAP).forEach(([supportArea, businessAreas]) => {
-      if (user.business_area && businessAreas.includes(user.business_area)) {
-        relevantSupportAreas.push(supportArea);
+      if (businessAreas.includes(businessArea)) {
+        console.log('Found relevant support area:', supportArea, 'for business area:', businessArea);
+        filterArea.push(supportArea);
       }
     });
-    
-    // If we found relevant support areas, filter newsletters by creators in those areas
-    if (relevantSupportAreas.length > 0) {
-      // Get users who have business areas that can provide support to current user
-      const supportingUsers = await User.find({
-        business_area: { $in: relevantSupportAreas }
-      }).select('_id');
-      
-      const supportingUserIds = supportingUsers.map(u => u._id);
-      
-      // Filter newsletters to only show those created by users in relevant support areas
-      query.createdBy = { $in: supportingUserIds };
-    }
-  }
+  });
   
-  const queryBuilder = new QueryBuilder(Newsletter.find(), query)
+  console.log('Final filter areas (relevant support areas):', filterArea);
+
+  // Set default filter for active newsletters
+  query.isActive = true;
+
+  const queryBuilder = new QueryBuilder(
+    Newsletter.find({ area: { $in: filterArea } }),
+    query,
+  )
     .search(['title', 'content'])
     .filter()
     .paginate()
     .sort()
     .fields();
 
-  const result = await queryBuilder.modelQuery.populate('createdBy', 'name email business_area');
+  const result = await queryBuilder.modelQuery.populate(
+    'createdBy',
+    'name image email business_area',
+  );
   const meta = await queryBuilder.getPaginationInfo();
 
   return {
@@ -70,28 +74,28 @@ const getAllNewslettersFromDB = async (
 const getNewsletterByIdFromDB = async (
   id: string,
 ): Promise<INewsletter | null> => {
-    const newsletter = await Newsletter.findById(id).populate(
-      'createdBy',
-      'name email business_area',
-    );
-    return newsletter;
+  const newsletter = await Newsletter.findById(id).populate(
+    'createdBy',
+    'name email business_area',
+  );
+  return newsletter;
 };
 
 const updateNewsletterToDB = async (
   id: string,
   payload: Partial<INewsletter>,
 ): Promise<INewsletter | null> => {
-    const newsletter = await Newsletter.findByIdAndUpdate(id, payload, {
-      new: true,
-      runValidators: true,
-    });
+  const newsletter = await Newsletter.findByIdAndUpdate(id, payload, {
+    new: true,
+    runValidators: true,
+  });
 
-    if (!newsletter) {
-      throw new ApiError(StatusCodes.NOT_FOUND, 'Newsletter not found');
-    }
+  if (!newsletter) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Newsletter not found');
+  }
 
-    return newsletter;
-  };
+  return newsletter;
+};
 
 const deleteNewsletterFromDB = async (id: string): Promise<void> => {
   try {

@@ -2,7 +2,7 @@ import { Socket } from 'socket.io';
 import QueryBuilder from '../../builder/QueryBuilder';
 import { Message } from '../message/message.model';
 import { IMessage } from './message.interface';
-import { Conversation } from '../conversation/conversation.model';
+import { Conversation } from '../conversation/conversaiton.model';
 import setCronJob from './../../../shared/setCronJob';
 const sendMessage = async (message: IMessage) => {
   // Create the message first
@@ -21,17 +21,6 @@ const sendMessage = async (message: IMessage) => {
   io.emit(`new_message::${newMessage.conversation}`, newMessage);
   io.emit(`new_user::${newMessage.receiver}`, newMessage);
 
-  // delete Media after 2 week
-  setCronJob('0 0 */14 * *', async () => {
-    const msg = await Message.findById(newMessage._id);
-
-    if (!!msg?.image) {
-      if (msg.text)
-        await Message.findByIdAndUpdate(msg._id, { $unset: { media: 1 } });
-      else await Message.findByIdAndDelete(msg._id);
-    }
-  });
-
   return newMessage;
 };
 
@@ -48,16 +37,15 @@ const getAllMessages = async (
       conversation: conversationId,
     }),
     query
-  ).paginate();
+  ).paginate().sort();
 
   const data = await result.modelQuery
     .populate({
       path: populateField,
-      select:
-        'name image _id',
+      select: 'name image _id',
       model: 'User',
     })
-    .sort({ createdAt: -1 });
+    // .sort({ createdAt: 1 });
 
   const pagination = await result.getPaginationInfo();
 

@@ -5,12 +5,6 @@ import config from '../../../config';
 import { USER_ROLES } from '../../../enums/user';
 import ApiError from '../../../errors/ApiError';
 import { IUser, UserModel } from './user.interface';
-import {
-  BUSINESS_EXPERIENCE,
-  BUSINESS_OBJECT,
-  BUSINESS_TYPE,
-  COMPANY_POSITION,
-} from '../../../enums/business';
 
 const psychologicalScoresSchema = new Schema(
   {
@@ -62,27 +56,9 @@ const userSchema = new Schema<IUser, UserModel>(
       expireAt: { type: Date },
     },
 
-    // Company / Business Info
-    company_name: { type: String },
-    company_legal_name: { type: String },
-    company_location: { type: String },
-    company_website: { type: String },
-    country: { type: String },
-    vat_number: { type: String },
-    mbti_type: { type: String },
-    company_id_number: { type: String },
-    business_object: { type: String, enum: Object.values(BUSINESS_OBJECT) },
-    business_types: [{ type: String, enum: Object.values(BUSINESS_TYPE) }],
-    business_area: { type: String },
-    experience: { type: String, enum: Object.values(BUSINESS_EXPERIENCE) },
-    positions: { type: String, enum: Object.values(COMPANY_POSITION) },
-    annual_turnover: {
-      type: String,
-      enum: ['0_100k', '100k_500k', '500k_1m', '1m_5m', '5m_plus'],
-    },
-
     // Psychological & Personality (latest only)
     psychological_scores: { type: psychologicalScoresSchema },
+    mbti_type: { type: String },
     personality_scores: { type: personalityResultSchema },
 
     // Ranking
@@ -126,16 +102,11 @@ userSchema.statics.isMatchPassword = async function (
 userSchema.statics.isActivated = async function (id: string): Promise<boolean> {
   const user = await this.findById(id);
   if (!user) return false;
-
-  const hasCompanyInfo =
-    (user.vat_number || user.company_id_number) &&
-    user.company_legal_name &&
-    user.company_website;
   const hasTests =
     user.psychological_scores?.last_taken &&
     user.personality_scores?.last_taken;
 
-  return !!(hasCompanyInfo && hasTests);
+  return !!(hasTests);
 };
 
 /* ---------- Middleware ---------- */

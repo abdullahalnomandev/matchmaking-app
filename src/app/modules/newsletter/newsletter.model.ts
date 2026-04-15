@@ -1,5 +1,6 @@
 import { Schema, model, Types } from 'mongoose';
 import { INewsletter } from './newsletter.interface';
+import { BUSINESS_OBJECT, SUPPORT_AREA } from '../../../enums/business';
 
 const newsletterSchema = new Schema<INewsletter>(
   {
@@ -7,13 +8,16 @@ const newsletterSchema = new Schema<INewsletter>(
       type: String,
       required: [true, 'Title is required'],
       trim: true,
-      maxlength: [200, 'Title cannot exceed 200 characters']
     },
     content: {
       type: String,
       required: [true, 'Content is required'],
       trim: true,
-      maxlength: [5000, 'Content cannot exceed 5000 characters']
+    },
+    area:{
+      type: String,
+      enum: Object.values(SUPPORT_AREA),
+      required: [true, 'Area is required']
     },
     image: {
       type: String,

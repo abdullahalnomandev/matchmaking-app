@@ -6,6 +6,7 @@ export interface INewsletter {
   content: string;
   image?: string;
   createdBy: Types.ObjectId;
+  area: string;
   isActive?: boolean;
   createdAt?: Date;
   updatedAt?: Date;

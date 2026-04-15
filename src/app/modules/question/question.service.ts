@@ -68,7 +68,7 @@ const createPsychologicalTestQuestions = async (
       new Date(user?.psychological_scores?.last_taken).getTime() >
       6 * 30 * 24 * 60 * 60 * 1000;
 
-  if (!is6MonthsPassed) {
+  if (user?.psychological_scores && !is6MonthsPassed) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
       'You can only take the test once every 6 months',
@@ -156,7 +156,7 @@ const createPersonalityTestQuestions = async (
       new Date(user?.psychological_scores?.last_taken).getTime() >
       6 * 30 * 24 * 60 * 60 * 1000;
 
-  if (!is6MonthsPassed) {
+  if (user?.personality_scores && !is6MonthsPassed) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
       'You can only take the test once every 6 months',

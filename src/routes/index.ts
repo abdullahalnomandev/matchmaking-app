@@ -11,6 +11,8 @@ import { FaqRoutes } from '../app/modules/faq/faq.route';
 import { SettingsRoutes } from '../settings/settings.route';
 import { NewsletterRoutes } from '../app/modules/newsletter/newsletter.route';
 import { WebinarRoutes } from '../app/modules/webinar/webinar.route';
+import { CompanyRoutes } from '../app/modules/company/company.route';
+import { ChatRoomRoutes } from '../app/modules/chat-room/chat-room.route';
 
 const router = express.Router();
 
@@ -63,6 +65,14 @@ const apiRoutes = [
     path: '/webinar',
     route: WebinarRoutes,
   },
+  {
+    path: '/company',
+    route: CompanyRoutes,
+  },
+  {
+    path:'/chat-rooms',
+    route:ChatRoomRoutes
+  }
 ];
 
 apiRoutes.forEach(route => router.use(route.path, route.route));

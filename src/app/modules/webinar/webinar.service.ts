@@ -5,10 +5,50 @@ import { StatusCodes } from 'http-status-codes';
 import QueryBuilder from '../../builder/QueryBuilder';
 import { User } from '../user/user.model';
 import { SUPPORT_TO_BUSINESS_MAP } from '../../../enums/business';
+import { WebinarType } from './webinar.constant';
+import { Company } from '../company/company.model';
 
 const createWebinarToDB = async (
   payload: Partial<IWebinar>,
 ): Promise<IWebinar> => {
+  if (payload.type === WebinarType.LIVE) {
+    payload.videoUrl = undefined;
+    // Validate required fields for live webinars
+    if (!payload.meetingUrl) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Meeting URL is required for live webinars',
+      );
+    }
+    if (!payload.scheduledAt) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Scheduled date is required for live webinars',
+      );
+    }
+
+    if (!payload.durationMinutes) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Duration is required for live webinars',
+      );
+    }
+  }
+
+  if (payload.type === WebinarType.RECORDING) {
+    payload.meetingUrl = undefined;
+    payload.scheduledAt = undefined;
+    payload.durationMinutes = undefined;
+
+    if (!payload.videoUrl) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Video url is required for recording webinars',
+      );
+    }
+  }
+
+  console.log('payload', payload);
   const webinar = await Webinar.create(payload);
   return webinar;
 };
@@ -17,47 +57,86 @@ const getAllWebinarsFromDB = async (
   query: Record<string, unknown>,
   userId: string,
 ): Promise<{ data: IWebinar[]; meta: any }> => {
-  const user = await User.findById(userId, 'business_area');
-  
-  // Set default filter for published webinars
-  query.isPublished = true;
-  
-  // Add business area filtering if user has business_area
-  if (user?.business_area) {
-    const relevantSupportAreas: string[] = [];
-    
-    // Find all support areas that match user's business area
-    Object.entries(SUPPORT_TO_BUSINESS_MAP).forEach(([supportArea, businessAreas]) => {
-      if (user.business_area && businessAreas.includes(user.business_area)) {
-        relevantSupportAreas.push(supportArea);
+  const companies = await Company.find(
+    { owner: userId },
+    'business_area',
+  ).lean();
+
+  if (!companies.length) {
+    return { data: [], meta: { total: 0, page: 1, limit: 0 } };
+  }
+
+  const businessAreas = companies
+    .map(c => c.business_area)
+    .filter(Boolean) as string[];
+
+  const relevantSupportAreasSet = new Set<string>();
+
+  for (const businessArea of businessAreas) {
+    for (const [supportArea, businessList] of Object.entries(
+      SUPPORT_TO_BUSINESS_MAP,
+    )) {
+      if (businessList.includes(businessArea)) {
+        relevantSupportAreasSet.add(supportArea);
       }
-    });
-    
-    // If we found relevant support areas, filter webinars by those areas
-    if (relevantSupportAreas.length > 0) {
-      query.supportArea = { $in: relevantSupportAreas };
     }
   }
-  
-  const queryBuilder = new QueryBuilder(Webinar.find(), query)
+
+  const relevantSupportAreas = Array.from(relevantSupportAreasSet);
+
+  query.isPublished = true;
+
+  const baseQuery: any = {};
+
+  if (relevantSupportAreas.length > 0) {
+    baseQuery.supportArea = { $in: relevantSupportAreas };
+  }
+
+  const queryBuilder = new QueryBuilder(Webinar.find(baseQuery), query)
     .search(['title', 'description'])
     .filter()
     .paginate()
     .sort()
     .fields();
 
-  const result = await queryBuilder.modelQuery.populate('creator', 'name email business_area');
-  const meta = await queryBuilder.getPaginationInfo();
+  const [result, meta] = await Promise.all([
+    queryBuilder.modelQuery
+      .populate('creator', 'name email business_area')
+      .lean(),
+    queryBuilder.getPaginationInfo(),
+  ]);
 
-  return {
-    data: result,
-    meta,
-  };
+  const now = new Date();
+
+  const data = result.map((webinar: any) => {
+    let dynamicStatus = webinar.status;
+
+    if (webinar.type === 'RECORDING') {
+      dynamicStatus = 'recorded';
+    }
+
+    if (webinar.type === 'LIVE' && webinar.scheduledAt) {
+      const start = new Date(webinar.scheduledAt);
+
+      const end = webinar.durationMinutes
+        ? new Date(start.getTime() + webinar.durationMinutes * 60000)
+        : new Date(start.getTime() + 60 * 60000);
+
+      if (now < start) dynamicStatus = 'upcoming';
+      else if (now <= end) dynamicStatus = 'live';
+      else dynamicStatus = 'completed';
+    }
+
+    return {
+      ...webinar,
+      status: dynamicStatus,
+    };
+  });
+
+  return { data, meta };
 };
 
-const getWebinarByIdFromDB = async (
-  id: string,
-): Promise<IWebinar | null> => {
+const getWebinarByIdFromDB = async (id: string): Promise<IWebinar | null> => {
   const webinar = await Webinar.findById(id).populate(
     'creator',
     'name email business_area',
@@ -104,7 +183,6 @@ const toggleWebinarStatus = async (
       throw new ApiError(StatusCodes.NOT_FOUND, 'Webinar not found');
     }
 
-    webinar.status = status;
     await webinar.save();
 
     return webinar;
@@ -138,9 +216,7 @@ const toggleWebinarPublishStatus = async (
   }
 };
 
-const toggleCommentsStatus = async (
-  id: string,
-): Promise<IWebinar | null> => {
+const toggleCommentsStatus = async (id: string): Promise<IWebinar | null> => {
   try {
     const webinar = await Webinar.findById(id);
 
@@ -165,28 +241,30 @@ const getUpcomingWebinars = async (
   userId: string,
 ): Promise<{ data: IWebinar[]; meta: any }> => {
   const user = await User.findById(userId, 'business_area');
-  
+
   // Set filters for upcoming live webinars
   query.type = 'LIVE';
   query.status = 'scheduled';
   query.isPublished = true;
   query.scheduledAt = { $gte: new Date() };
-  
+
   // Add business area filtering if user has business_area
   if (user?.business_area) {
     const relevantSupportAreas: string[] = [];
-    
-    Object.entries(SUPPORT_TO_BUSINESS_MAP).forEach(([supportArea, businessAreas]) => {
-      if (user.business_area && businessAreas.includes(user.business_area)) {
-        relevantSupportAreas.push(supportArea);
-      }
-    });
-    
+
+    Object.entries(SUPPORT_TO_BUSINESS_MAP).forEach(
+      ([supportArea, businessAreas]) => {
+        if (user.business_area && businessAreas.includes(user.business_area)) {
+          relevantSupportAreas.push(supportArea);
+        }
+      },
+    );
+
     if (relevantSupportAreas.length > 0) {
       query.supportArea = { $in: relevantSupportAreas };
     }
   }
-  
+
   const queryBuilder = new QueryBuilder(Webinar.find(), query)
     .search(['title', 'description'])
     .filter()
@@ -194,7 +272,10 @@ const getUpcomingWebinars = async (
     .sort()
     .fields();
 
-  const result = await queryBuilder.modelQuery.populate('creator', 'name email business_area');
+  const result = await queryBuilder.modelQuery.populate(
+    'creator',
+    'name email business_area',
+  );
   const meta = await queryBuilder.getPaginationInfo();
 
   return {

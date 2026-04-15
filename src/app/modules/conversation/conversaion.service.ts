@@ -1,7 +1,8 @@
 import QueryBuilder from '../../builder/QueryBuilder';
 import { Message } from '../message/message.model';
 import { User } from '../user/user.model';
-import { Conversation } from './conversation.model';
+import { Conversation } from './conversaiton.model';
+import { conversaionSearchableField } from './conversation.constant';
 
 const createConversation = async ({
     creator,
@@ -12,6 +13,10 @@ const createConversation = async ({
     participant: string;
     text: string;
 }) => {
+
+     if (!text) {
+        throw new Error('Please enter a message');
+    }
     const [isCreateorExist, isParticipantExist] = await Promise.all([
         User.findById(creator, '_id').lean().exec(),
         User.findById(participant, '_id').lean().exec(),
@@ -68,8 +73,8 @@ const createConversation = async ({
 };
 
 const getAllConversaions = async (query: Record<string, any>, userId: string) => {
-    const isParticipant = await Conversation.exists({ creator: userId });
-    const populateField = isParticipant ? 'participant' : 'creator';
+    // The "participant" should always mean "other user", i.e., not my profile.
+    // So, we always want to populate the user who is NOT me.
 
     const search = query.searchTerm || "";
     query.sort = '-updatedAt';
@@ -84,12 +89,12 @@ const getAllConversaions = async (query: Record<string, any>, userId: string) =>
         .sort()
         .filter();
 
+    // We always want to populate the "other user" as "participant" (from my POV):
     let modelQuery = result.modelQuery
         .populate({
-            path: populateField,
-            select: "_id name email image ", // add more if needed
-            model: "User",
-            match: search ? { "name": { $regex: search, $options: "i" } } : {}, // search on user name
+            path: "creator participant",
+            select: "_id name image", // add more if needed
+            model: "User"
         })
         .populate({
             path: "lastMessage",
@@ -98,12 +103,28 @@ const getAllConversaions = async (query: Record<string, any>, userId: string) =>
 
     const data = await modelQuery;
     const pagination = await result.getPaginationInfo();
-    // ⚠️ Important: filter out conversations where populate returned null
-    const filteredData = data.filter((conv: any) => conv[populateField] !== null);
+
+    // Always assign "participant" on result as the user who is not me, so frontend can always consume .participant as the opposite user
+    const mappedData = data.map((conv: any) => {
+        let participantUser;
+        if (conv.creator && conv.creator._id.toString() !== userId) {
+            participantUser = conv.creator;
+        } else if (conv.participant && conv.participant._id.toString() !== userId) {
+            participantUser = conv.participant;
+        } else {
+            participantUser = null; // fallback
+        }
+        // Remove both creator & participant references, only expose participant as opposite person
+        return {
+            ...conv.toObject(),
+            participant: participantUser,
+            creator: undefined
+        }
+    }).filter((conv: any) => conv.participant !== null);
 
     return {
         pagination,
-        data: filteredData,
+        data: mappedData,
     };
 };
 
@@ -116,8 +137,10 @@ const deleteConversation = async (id: string, creator: string) => {
     if (conversation.creator.toString() !== creator) {
         throw new Error('You are not authorized to delete this conversation');
     }
-    await conversation.deleteOne();
+
     await Message.deleteMany({ conversation: id });
+    await conversation.deleteOne();
+
     return conversation;
 }
 

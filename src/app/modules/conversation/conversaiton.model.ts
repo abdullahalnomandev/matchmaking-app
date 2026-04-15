@@ -1,5 +1,5 @@
 import { model, Schema } from 'mongoose';
-import { IConversation, IConversationModel } from './conversation.interface';
+import { IConversation, IConversationModel } from './conversaion.interface';
 
 const conversationSchema = new Schema<IConversation, IConversationModel>(
     {

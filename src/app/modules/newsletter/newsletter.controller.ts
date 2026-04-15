@@ -9,7 +9,7 @@ const createNewsletter = catchAsync(async (req: Request, res: Response) => {
   // Add createdBy from authenticated user
   const payload = {
     ...req.body,
-    createdBy: (req.user as any)._id
+    createdBy : (req.user as any).id
   };
   let image = getSingleFilePath(req.files, 'image');
   if (image) {
@@ -65,7 +65,7 @@ const updateNewsletter = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const payload = {
     ...req.body,
-    updatedBy: (req.user as any)._id
+    updatedBy: (req.user as any).id
   };
   let image = getSingleFilePath(req.files, 'image');
   if (image) {

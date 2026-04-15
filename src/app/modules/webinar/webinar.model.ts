@@ -1,5 +1,6 @@
 import { Schema, model, Types } from 'mongoose';
 import { IWebinar } from './webinar.interface';
+import { WebinarStatus } from './webinar.constant';
 
 const webinarSchema = new Schema<IWebinar>(
   {
@@ -14,6 +15,9 @@ const webinarSchema = new Schema<IWebinar>(
       required: [true, 'Description is required'],
       trim: true,
       maxlength: [5000, 'Description cannot exceed 5000 characters']
+    },
+    image: {
+      type: String
     },
     creator: {
       type: Schema.Types.ObjectId,
@@ -98,12 +102,10 @@ const webinarSchema = new Schema<IWebinar>(
     // SYSTEM STATUS
     status: {
       type: String,
-      required: [true, 'Status is required'],
       enum: {
-        values: ['scheduled', 'live', 'completed'],
-        message: 'Status must be scheduled, live, or completed'
-      },
-      default: 'scheduled'
+        values: Object.values(WebinarStatus),
+        message: 'Status must be recorded, upcoming, completed, or live'
+      }
     },
     // SETTINGS
     commentsEnabled: {
@@ -114,6 +116,7 @@ const webinarSchema = new Schema<IWebinar>(
       type: Boolean,
       default: true
     }
+    
   },
   { timestamps: true }
 );

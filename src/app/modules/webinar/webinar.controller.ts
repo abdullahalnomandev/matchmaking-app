@@ -7,11 +7,18 @@ import { getSingleFilePath } from '../../../shared/getFilePath';
 
 const createWebinar = catchAsync(async (req: Request, res: Response) => {
   // Add creator from authenticated user
-  const payload = {
+  const image = getSingleFilePath(req.files, 'image');
+  console.log('image', image);
+  const payload: any = {
     ...req.body,
-    creator: (req.user as any)._id
+    creator: (req.user as any).id
   };
 
+  if (image) {
+    payload.image = image;
+  }
+
+  console.log('payload-', payload);
   const result = await WebinarService.createWebinarToDB(payload);
   
   sendResponse(res, {
@@ -69,10 +76,15 @@ const getWebinarById = catchAsync(async (req: Request, res: Response) => {
 
 const updateWebinar = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
+  const image = getSingleFilePath(req.files, 'image');
   const payload = {
     ...req.body,
     updatedBy: (req.user as any)._id
   };
+  
+  if (image) {
+    payload.image = image;
+  }
   
   const result = await WebinarService.updateWebinarToDB(id, payload);
   

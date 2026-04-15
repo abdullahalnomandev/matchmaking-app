@@ -31,6 +31,18 @@ router
   );
 
 router
+  .route('/profile/:id')
+  .get(
+    auth(
+      USER_ROLES.ADMIN,
+      USER_ROLES.BUSINESS_USER,
+      USER_ROLES.SUPPORT_PARTNER,
+      USER_ROLES.SUPER_ADMIN,
+    ),
+    UserController.getUserProfileById,
+  );
+
+router
   .route('/')
   .get(
     auth(

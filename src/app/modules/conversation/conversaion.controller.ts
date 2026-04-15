@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
-import { ConversationService } from './conversation.service';
+import { ConversationService } from './conversaion.service';
 
 const createConversation = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -13,7 +13,7 @@ const createConversation = catchAsync(
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.CREATED,
-      message: 'conversation created successfully',
+      message: 'conversaion created successfully',
       data: result,
     });
   }
@@ -38,11 +38,11 @@ const deleteConversation = catchAsync(async (req: Request, res: Response, next: 
   const id = req.params.id;
   const result = await ConversationService.deleteConversation(id, creator);
   sendResponse(res, {
-      success: true,
-      statusCode: StatusCodes.CREATED,
-      message: 'conversation deleted successfully',
-      data: result,
-    });
+    success: true,
+    statusCode: StatusCodes.CREATED,
+    message: 'conversaion deleted successfully',
+    data: result,
+  });
 }
 );
 
