@@ -6,6 +6,7 @@ import catchAsync from '../../../shared/catchAsync';
 import { CHAT_ROOM_MESSAGES } from './chat-room.constant';
 
 const createChatRoom = catchAsync(async (req: Request, res: Response) => {
+  
   const result = await ChatRoomService.createChatRoomToDB(req.body, (req.user as any).id);
   
   sendResponse(res, {

@@ -115,6 +115,12 @@ const webinarSchema = new Schema<IWebinar>(
     isPublished: {
       type: Boolean,
       default: true
+    },
+    // COUNTS
+    commentCount: {
+      type: Number,
+      default: 0,
+      min: 0
     }
     
   },

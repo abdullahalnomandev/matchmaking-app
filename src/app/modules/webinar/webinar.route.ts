@@ -3,6 +3,8 @@ import { WebinarController } from './webinar.controller';
 import auth from '../../middlewares/auth';
 import { USER_ROLES } from '../../../enums/user';
 import fileUploadHandler from '../../middlewares/fileUploadHandler';
+import { WebinarCommentRoutes } from './comment/webinar-comment.routes';
+import { WebinarLikeRoutes } from './like/webinar-like.routes';
 
 const router = Router();
 
@@ -117,5 +119,11 @@ router
     ),
     WebinarController.toggleCommentsStatus,
   );
+
+// Comment routes
+router.use('/comments', WebinarCommentRoutes);
+
+// Like routes
+router.use('/likes', WebinarLikeRoutes);
 
 export const WebinarRoutes = router;

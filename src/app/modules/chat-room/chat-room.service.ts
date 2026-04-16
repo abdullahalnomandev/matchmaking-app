@@ -1,16 +1,17 @@
 import QueryBuilder from '../../builder/QueryBuilder';
 import { IChatRoom, IChatRoomFilters, ICreateChatRoomPayload, IUpdateChatRoomPayload } from './chat-room.interface';
-import { ChatRoom } from './chat-room.model';
+import {  ChatRoom } from './chat-room.model';
 import { CHAT_ROOM_MESSAGES } from './chat-room.constant';
 import { SUPPORT_TO_BUSINESS_MAP } from '../../../enums/business';
 import { Company } from '../company/company.model';
 
 const createChatRoomToDB = async (payload: ICreateChatRoomPayload, creatorId: string): Promise<IChatRoom> => {
   // Check if chat room with same name already exists
-  const existingChatRoom = await ChatRoom.findOne({ name: payload.name });
+  const existingChatRoom = await ChatRoom.findOne({ supportArea: payload.supportArea });
   if (existingChatRoom) {
     throw new Error(CHAT_ROOM_MESSAGES.ALREADY_EXISTS);
   }
+
 
   const chatRoomPayload = {
     ...payload,
@@ -61,8 +62,7 @@ const getAllChatRoomsFromDB = async (
 
   const [data, meta] = await Promise.all([
     queryBuilder.modelQuery
-      .populate('creator', 'name email')
-      .populate('participants', 'name email'),
+      .populate('creator', 'name email'),
     queryBuilder.getPaginationInfo(),
   ]);
 
@@ -72,7 +72,6 @@ const getAllChatRoomsFromDB = async (
 const getChatRoomByIdFromDB = async (id: string, userId?: string): Promise<IChatRoom | null> => {
   const chatRoom = await ChatRoom.findById(id)
     .populate('creator', 'name email')
-    .populate('participants', 'name email')
     .populate('lastMessage.sender', 'name email');
 
   if (!chatRoom) {
@@ -111,8 +110,7 @@ const updateChatRoomInDB = async (
     payload,
     { new: true, runValidators: true }
   )
-    .populate('creator', 'name email')
-    .populate('participants', 'name email');
+    .populate('creator', 'name email');
 
   return updatedChatRoom;
 };
@@ -143,23 +141,13 @@ const joinChatRoom = async (chatRoomId: string, userId: string): Promise<IChatRo
     throw new Error('Cannot join inactive chat room');
   }
 
-  // Check if user is already a participant
-  const isAlreadyParticipant = chatRoom.participants?.some(
-    participant => participant.toString() === userId
-  );
-
-  if (isAlreadyParticipant) {
-    return chatRoom;
-  }
-
   // Add user to participants
   const updatedChatRoom = await ChatRoom.findByIdAndUpdate(
     chatRoomId,
     { $addToSet: { participants: userId } },
     { new: true }
   )
-    .populate('creator', 'name email')
-    .populate('participants', 'name email');
+    .populate('creator', 'name email');
 
   return updatedChatRoom;
 };
@@ -177,8 +165,7 @@ const leaveChatRoom = async (chatRoomId: string, userId: string): Promise<IChatR
     { $pull: { participants: userId } },
     { new: true }
   )
-    .populate('creator', 'name email')
-    .populate('participants', 'name email');
+    .populate('creator', 'name email');
 
   return updatedChatRoom;
 };
@@ -189,7 +176,6 @@ const getChatRoomsBySupportArea = async (supportArea: string): Promise<IChatRoom
     isActive: true 
   })
     .populate('creator', 'name email')
-    .populate('participants', 'name email')
     .sort({ createdAt: -1 });
 
   return chatRooms;

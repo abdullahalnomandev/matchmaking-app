@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { ChatRoomController } from './chat-room.controller';
 import auth from '../../middlewares/auth';
 import { USER_ROLES } from '../../../enums/user';
+import fileUploadHandler from '../../middlewares/fileUploadHandler';
 
 const router = Router();
 
@@ -22,7 +23,7 @@ router
       USER_ROLES.ADMIN,
       USER_ROLES.SUPER_ADMIN,
       USER_ROLES.SUPPORT_PARTNER,
-      USER_ROLES.BUSINESS_USER
+      USER_ROLES.BUSINESS_USER,
     ),
     ChatRoomController.createChatRoom,
   );
@@ -51,19 +52,11 @@ router
     ChatRoomController.getChatRoomById,
   )
   .patch(
-    auth(
-      USER_ROLES.ADMIN,
-      USER_ROLES.SUPER_ADMIN,
-      USER_ROLES.SUPPORT_PARTNER,
-    ),
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN, USER_ROLES.SUPPORT_PARTNER),
     ChatRoomController.updateChatRoom,
   )
   .delete(
-    auth(
-      USER_ROLES.ADMIN,
-      USER_ROLES.SUPER_ADMIN,
-      USER_ROLES.SUPPORT_PARTNER,
-    ),
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN, USER_ROLES.SUPPORT_PARTNER),
     ChatRoomController.deleteChatRoom,
   );
 
