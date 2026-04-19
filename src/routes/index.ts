@@ -13,6 +13,7 @@ import { NewsletterRoutes } from '../app/modules/newsletter/newsletter.route';
 import { WebinarRoutes } from '../app/modules/webinar/webinar.route';
 import { CompanyRoutes } from '../app/modules/company/company.route';
 import { ChatRoomRoutes } from '../app/modules/chat-room/chat-room.route';
+import { ChatRoomMessageRoutes } from '../app/modules/chat-room/chat-room-message/chat-room-message.routes';
 
 const router = express.Router();
 
@@ -72,6 +73,10 @@ const apiRoutes = [
   {
     path:'/chat-rooms',
     route:ChatRoomRoutes
+  },
+  {
+    path:'/chat-messages',
+    route:ChatRoomMessageRoutes
   }
 ];
 

@@ -8,7 +8,6 @@ export interface IChatRoom {
   description: string;
   isActive: boolean;
   creator?: Types.ObjectId;
-  participants?: Types.ObjectId[];
   lastMessage?: {
     content: string;
     sender: Types.ObjectId;

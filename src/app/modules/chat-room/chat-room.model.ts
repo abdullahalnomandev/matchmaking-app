@@ -55,10 +55,6 @@ const chatRoomSchema = new Schema<IChatRoom>(
       ref: 'User',
       required: [true, 'Creator is required']
     },
-    participants: [{
-      type: Schema.Types.ObjectId,
-      ref: 'User'
-    }],
     lastMessage: {
       content: {
         type: String,
@@ -76,16 +72,5 @@ const chatRoomSchema = new Schema<IChatRoom>(
   { timestamps: true }
 );
 
-// Indexes for search functionality
-chatRoomSchema.index({ name: 'text', description: 'text' });
-chatRoomSchema.index({ supportArea: 1 });
-chatRoomSchema.index({ isActive: 1 });
-chatRoomSchema.index({ creator: 1 });
-chatRoomSchema.index({ participants: 1 });
-chatRoomSchema.index({ createdAt: -1 });
-
-// Compound indexes for common queries
-chatRoomSchema.index({ supportArea: 1, isActive: 1 });
-chatRoomSchema.index({ creator: 1, isActive: 1 });
 
 export const ChatRoom = model<IChatRoom>('ChatRoom', chatRoomSchema);

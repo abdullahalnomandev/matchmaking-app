@@ -27,6 +27,9 @@ export interface IWebinar {
   commentsEnabled: boolean;
   isPublished: boolean;
   
+  // COUNTS
+  commentCount?: number;
+  
   createdAt?: Date;
   updatedAt?: Date;
 }
