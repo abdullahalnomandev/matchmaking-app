@@ -127,6 +127,8 @@ const getUserProfileFromDB = async (user: JwtPayload): Promise<any> => {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
 
+  console.log(isExistUser.ranking_score);
+
   const totalRakingScore =
     (Math.round(isExistUser.ranking_score?.psychological || 0) +
     Math.round(isExistUser.ranking_score?.personality || 0) +

@@ -55,18 +55,18 @@ const getConsultationsByCompany = catchAsync(async (req: Request, res: Response)
   });
 });
 
-const getConsultationsByCreator = catchAsync(async (req: Request, res: Response) => {
-  const user = (req as any).user;
-  const result = await ConsultationService.getConsultationsByCreator(req.query, user.id);
-  
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: 'Your consultations retrieved successfully',
-    data: result.data,
-    pagination: result.pagination,
+  const getConsultationsByCreator = catchAsync(async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    const result = await ConsultationService.getConsultationsByCreator(req.query, user.id);
+    
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Your consultations retrieved successfully',
+      data: result.data,
+      pagination: result.pagination,
+    });
   });
-});
 
 const updateConsultation = catchAsync(async (req: Request, res: Response) => {
   const user = (req as any).user;
@@ -101,6 +101,18 @@ const deleteConsultation = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getUserConsultations = catchAsync(async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  const result = await ConsultationService.getConsultationsByCreator(req.query, user.id);
+  
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Your consultations retrieved successfully',
+    data: result.data,
+    pagination: result.pagination,
+  });
+});
 export const ConsultationController = {
   createConsultation,
   getConsultations,
@@ -108,5 +120,6 @@ export const ConsultationController = {
   getConsultationsByCompany,
   getConsultationsByCreator,
   updateConsultation,
-  deleteConsultation
+  deleteConsultation,
+  getUserConsultations
 };

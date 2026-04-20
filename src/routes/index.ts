@@ -14,6 +14,8 @@ import { WebinarRoutes } from '../app/modules/webinar/webinar.route';
 import { CompanyRoutes } from '../app/modules/company/company.route';
 import { ChatRoomRoutes } from '../app/modules/chat-room/chat-room.route';
 import { ChatRoomMessageRoutes } from '../app/modules/chat-room/chat-room-message/chat-room-message.routes';
+import { ConsultationRoutes } from '../app/modules/consultation/consultation.routes';
+import { ConsultationRequestRoutes } from '../app/modules/consultation/request';
 
 const router = express.Router();
 
@@ -77,6 +79,14 @@ const apiRoutes = [
   {
     path:'/chat-messages',
     route:ChatRoomMessageRoutes
+  },
+  {
+    path:'/consultation',
+    route:ConsultationRoutes
+  },
+  {
+    path:'/consultation/requests',
+    route: ConsultationRequestRoutes
   }
 ];
 

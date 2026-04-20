@@ -2,6 +2,7 @@ import express from 'express';
 import { USER_ROLES } from '../../../enums/user';
 import auth from '../../middlewares/auth';
 import { ConsultationController } from './consultation.controller';
+import { ConsultationRequestRoutes } from './request/requestRouter.route';
 
 const router = express.Router();
 
@@ -51,6 +52,16 @@ router.get(
     USER_ROLES.SUPPORT_PARTNER
   ),
   ConsultationController.getConsultationsByCreator,
+);
+router.get(
+  '/user/my-consultations',
+  auth(
+    USER_ROLES.ADMIN,
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.BUSINESS_USER,
+    USER_ROLES.SUPPORT_PARTNER
+  ),
+  ConsultationController.getUserConsultations,
 );
 
 // Get consultation by ID

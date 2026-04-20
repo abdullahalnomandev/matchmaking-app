@@ -85,6 +85,7 @@ const getAllConversaions = async (query: Record<string, any>, userId: string) =>
         }),
         query
     )
+        .search(conversaionSearchableField)
         .paginate()
         .sort()
         .filter();
