@@ -103,7 +103,7 @@ const deleteConsultation = catchAsync(async (req: Request, res: Response) => {
 
 const getUserConsultations = catchAsync(async (req: Request, res: Response) => {
   const user = (req as any).user;
-  const result = await ConsultationService.getConsultationsByCreator(req.query, user.id);
+  const result = await ConsultationService.getUserBetterCallMe(req.query, user.id);
   
   sendResponse(res, {
     success: true,

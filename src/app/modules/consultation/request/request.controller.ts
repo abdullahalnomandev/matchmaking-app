@@ -74,11 +74,11 @@ const getConsultationRequestsByUser = catchAsync(
 // =========================
 const getConsultationRequestById = catchAsync(
   async (req: Request, res: Response) => {
-    const { consultationRequestId } = req.params;
+    const { requestId } = req.params;
 
     const result =
       await ConsultationRequestService.getConsultationRequestById(
-        consultationRequestId as string
+        requestId as string
       );
 
     sendResponse(res, {
@@ -95,12 +95,12 @@ const getConsultationRequestById = catchAsync(
 // =========================
 const updateConsultationRequest = catchAsync(
   async (req: Request, res: Response) => {
-    const { consultationRequestId } = req.params;
+    const { requestId } = req.params;
     const payload = req.body;
 
     const result =
       await ConsultationRequestService.updateConsultationRequest(
-        consultationRequestId as string,
+        requestId as string,
         payload
       );
 
@@ -118,11 +118,11 @@ const updateConsultationRequest = catchAsync(
 // =========================
 const deleteConsultationRequest = catchAsync(
   async (req: Request, res: Response) => {
-    const { consultationRequestId } = req.params;
+    const { requestId } = req.params;
 
     const result =
       await ConsultationRequestService.deleteConsultationRequest(
-        consultationRequestId as string
+        requestId as string
       );
 
     sendResponse(res, {

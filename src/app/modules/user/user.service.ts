@@ -225,9 +225,18 @@ const getUserProfileByIdFromDB = async (
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
 
+  const totalRakingScore =
+    (Math.round(isExistUser.ranking_score?.psychological || 0) +
+    Math.round(isExistUser.ranking_score?.personality || 0) +
+    Math.round(isExistUser.ranking_score?.experience || 0) +
+    Math.round(isExistUser.ranking_score?.turnover || 0) +
+    Math.round(isExistUser.ranking_score?.activity || 0));
+
   // Return all user data + totals + isConnectedToNetwork
   return {
     ...isExistUser,
+    rank_score: Math.round(totalRakingScore),
+    rank_level: userRank(Math.round(totalRakingScore) || 0),
   };
 };
 

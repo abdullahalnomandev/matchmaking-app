@@ -85,8 +85,8 @@ const apiRoutes = [
     route:ConsultationRoutes
   },
   {
-    path:'/consultation/requests',
-    route: ConsultationRequestRoutes
+    path:'/consultation-request',
+    route:ConsultationRequestRoutes
   }
 ];
 
