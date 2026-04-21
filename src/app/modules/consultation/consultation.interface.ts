@@ -6,6 +6,7 @@ export interface IConsultation {
   title: string;
   company: Types.ObjectId;
   scheduledDate: Date;
+  scheduleTime: string;
   durationMinutes: number;
   meetingLink: string;
   creator: Types.ObjectId;
@@ -19,6 +20,7 @@ export interface ICreateConsultationPayload {
   title: string;
   company: string;
   scheduledDate: Date;
+  scheduleTime: string;
   durationMinutes: number;
   meetingLink: string;
 }
@@ -27,6 +29,7 @@ export interface IUpdateConsultationPayload {
   name?: string;
   title?: string;
   scheduledDate?: Date;
+  scheduleTime?: string;
   durationMinutes?: number;
   meetingLink?: string;
   status?: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'IN_PROGRESS';

@@ -112,4 +112,15 @@ router.delete(
   ConsultationController.deleteConsultation,
 );
 
+router.get(
+  '/book/my-consultations',
+  auth(
+    USER_ROLES.ADMIN,
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.BUSINESS_USER,
+    USER_ROLES.SUPPORT_PARTNER
+  ),
+  ConsultationController.getMyBookedConsultations,
+);
+
 export const ConsultationRoutes = router;

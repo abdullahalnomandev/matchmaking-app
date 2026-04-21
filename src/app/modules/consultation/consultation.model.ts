@@ -29,6 +29,11 @@ const consultationSchema = new Schema<IConsultation>(
         message: 'Scheduled date must be in the future'
       }
     },
+    scheduleTime:{
+      type: String,
+      required: [true, 'Schedule time is required'],
+      trim: true,
+    },
     durationMinutes: {
       type: Number,
       required: [true, 'Duration is required'],

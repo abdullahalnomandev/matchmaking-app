@@ -152,7 +152,7 @@ const getConsultationsByCreator = async (
     .filter(['type']);
 
   const data = await consultationQuery.modelQuery
-    .select('scheduledDate company creator') 
+    .select('-status')
     .populate('company', 'company_name company_website')
     .populate('creator', 'name email image')
     .lean();
@@ -380,13 +380,13 @@ const getUserBetterCallMe = async (query: IConsultationFilters) => {
 
   // Add rank_score and rank_level to each consultation
   data = data.map((consultation: any) => {
-    const totalRakingScore = 
-      (Math.round(consultation.creator?.ranking_score?.psychological || 0) +
+    const totalRakingScore =
+      Math.round(consultation.creator?.ranking_score?.psychological || 0) +
       Math.round(consultation.creator?.ranking_score?.personality || 0) +
       Math.round(consultation.creator?.ranking_score?.experience || 0) +
       Math.round(consultation.creator?.ranking_score?.turnover || 0) +
-      Math.round(consultation.creator?.ranking_score?.activity || 0));
-    
+      Math.round(consultation.creator?.ranking_score?.activity || 0);
+
     return {
       ...consultation,
       creator: {
@@ -404,7 +404,7 @@ const getUserBetterCallMe = async (query: IConsultationFilters) => {
   const page = Number(query.page) || 1;
   const limit = Number(query.limit) || 10;
   const skip = (page - 1) * limit;
-  
+
   // Get total count with same filters (without pagination)
   const countQuery = new QueryBuilder(
     Consultation.find({
@@ -415,7 +415,7 @@ const getUserBetterCallMe = async (query: IConsultationFilters) => {
     .search(['title', 'name'])
     .filter([
       'company_name',
-      'company_legal_name', 
+      'company_legal_name',
       'company_location',
       'company_website',
       'country',
@@ -426,7 +426,7 @@ const getUserBetterCallMe = async (query: IConsultationFilters) => {
       'business_area',
       'experience',
       'positions',
-      'annual_turnover'
+      'annual_turnover',
     ]);
 
   // Apply same populate filters to count query
@@ -446,7 +446,10 @@ const getUserBetterCallMe = async (query: IConsultationFilters) => {
   const countData = await countQuery.modelQuery
     .populate({
       path: 'company',
-      match: Object.keys(countCompanyMatch).length > 0 ? countCompanyMatch : undefined,
+      match:
+        Object.keys(countCompanyMatch).length > 0
+          ? countCompanyMatch
+          : undefined,
     })
     .populate({
       path: 'creator',
@@ -454,7 +457,9 @@ const getUserBetterCallMe = async (query: IConsultationFilters) => {
     })
     .lean();
 
-  const filteredCount = countData.filter(item => item.company && item.creator).length;
+  const filteredCount = countData.filter(
+    item => item.company && item.creator,
+  ).length;
 
   const pagination = {
     total: filteredCount,
@@ -469,6 +474,211 @@ const getUserBetterCallMe = async (query: IConsultationFilters) => {
   };
 };
 
+// const getBookingConsultations = async (
+//   query: IConsultationFilters,
+//   creatorId: string,
+// ) => {
+//   const today = dayjs().startOf('day').toDate();
+
+//   const dateFilter =
+//     query.type === 'upcoming'
+//       ? { scheduledDate: { $gte: today } }
+//       : query.type === 'completed'
+//         ? { scheduledDate: { $lt: today } }
+//         : {};
+
+//   const myBooksConsultations = await ConsultationRequest.find({
+//     request_user: creatorId,
+//   }).select('consultation');
+//   const baseFilter = {
+//     _id: { $in: myBooksConsultations.map(c => c.consultation) },
+//     ...dateFilter,
+//   };
+
+//   const consultationQuery = new QueryBuilder(
+//     Consultation.find(baseFilter),
+//     query,
+//   )
+//     .paginate()
+//     .sort()
+//     .filter(['type']);
+
+//   const data = await consultationQuery.modelQuery
+//     .populate('company', 'company_name company_website')
+//     .populate('creator', 'name email image')
+//     .lean();
+
+//   if (!data.length) {
+//     return {
+//       data: [],
+//       pagination: await consultationQuery.getPaginationInfo(),
+//     };
+//   }
+
+//   const consultationIds = data.map(
+//     (c: any) => new mongoose.Types.ObjectId(c._id),
+//   );
+//   const requestCounts = await ConsultationRequest.aggregate([
+//     {
+//       $match: {
+//         consultation: { $in: consultationIds },
+//       },
+//     },
+//     {
+//       $group: {
+//         _id: '$consultation',
+//         approveToJoinCount: {
+//           $sum: {
+//             $cond: [{ $eq: ['$status', 'accepted'] }, 1, 0],
+//           },
+//         },
+//         pendingCount: {
+//           $sum: {
+//             $cond: [{ $eq: ['$status', 'pending'] }, 1, 0],
+//           },
+//         },
+//       },
+//     },
+//   ]);
+
+//   const requestCountMap: Record<string, any> = {};
+//   requestCounts.forEach(item => {
+//     requestCountMap[item._id.toString()] = {
+//       approveToJoinCount: item.approveToJoinCount,
+//       pendingCount: item.pendingCount,
+//     };
+//   });
+
+//   const dataWithCounts = data.map((consultation: any) => ({
+//     ...consultation,
+//     requestCount: requestCountMap[consultation._id.toString()] || {
+//       approveToJoinCount: 0,
+//       pendingCount: 0,
+//     },
+//   }));
+
+//   const pagination = await consultationQuery.getPaginationInfo();
+
+//   return {
+//     data: dataWithCounts,
+//     pagination,
+//   };
+// };
+
+const getBookingConsultations = async (
+  query: IConsultationFilters,
+  creatorId: string,
+) => {
+  const today = dayjs().startOf('day').toDate();
+
+  // 📅 Date filter
+  const dateFilter =
+    query.type === 'upcoming'
+      ? { scheduledDate: { $gte: today } }
+      : query.type === 'completed'
+        ? { scheduledDate: { $lt: today } }
+        : {};
+
+  // 🔎 Get booked consultations ids
+  const myBooksConsultations = await ConsultationRequest.find({
+    request_user: creatorId,
+  }).select('consultation');
+
+  const consultationIdsList = myBooksConsultations.map(c => c.consultation);
+
+  // 🧱 Base filter
+  const baseFilter = {
+    _id: { $in: consultationIdsList },
+    ...dateFilter,
+  };
+
+  // 🏗 Query Builder
+  const consultationQuery = new QueryBuilder(
+    Consultation.find(baseFilter),
+    query,
+  )
+    .paginate()
+    .sort()
+    .filter(['type']);
+
+  // 📦 Fetch data
+  const data = await consultationQuery.modelQuery
+    .populate('company', 'company_name company_website')
+    .populate('creator', 'name email image')
+    .lean();
+
+  if (!data.length) {
+    return {
+      data: [],
+      pagination: await consultationQuery.getPaginationInfo(),
+    };
+  }
+
+  const consultationIds = data.map(
+    (c: any) => new mongoose.Types.ObjectId(c._id),
+  );
+
+  // 📊 Aggregate counts
+  const requestCounts = await ConsultationRequest.aggregate([
+    {
+      $match: {
+        consultation: { $in: consultationIds },
+      },
+    },
+    {
+      $group: {
+        _id: '$consultation',
+        approveToJoinCount: {
+          $sum: {
+            $cond: [{ $eq: ['$status', 'accepted'] }, 1, 0],
+          },
+        },
+        pendingCount: {
+          $sum: {
+            $cond: [{ $eq: ['$status', 'pending'] }, 1, 0],
+          },
+        },
+      },
+    },
+  ]);
+
+  // 🗺 Map counts
+  const requestCountMap: Record<string, any> = {};
+  requestCounts.forEach(item => {
+    requestCountMap[item._id.toString()] = {
+      approveToJoinCount: item.approveToJoinCount,
+      pendingCount: item.pendingCount,
+    };
+  });
+
+  // ✅ Get current user's request status
+  const userRequests = await ConsultationRequest.find({
+    consultation: { $in: consultationIds },
+    request_user: creatorId,
+  }).select('consultation status');
+
+  const userRequestMap: Record<string, string> = {};
+  userRequests.forEach(req => {
+    userRequestMap[req.consultation.toString()] = req.status;
+  });
+
+  // 🔗 Merge everything
+  const dataWithCounts = data.map((consultation: any) => ({
+    ...consultation,
+    requestCount: requestCountMap[consultation._id.toString()] || {
+      approveToJoinCount: 0,
+      pendingCount: 0,
+    },
+    myRequestStatus: userRequestMap[consultation._id.toString()] || null, // 🔥 important
+  }));
+
+  const pagination = await consultationQuery.getPaginationInfo();
+
+  return {
+    data: dataWithCounts,
+    pagination,
+  };
+};
 export const ConsultationService = {
   createConsultation,
   getConsultations,
@@ -477,5 +687,6 @@ export const ConsultationService = {
   getConsultationsByCreator,
   updateConsultation,
   deleteConsultation,
-  getUserBetterCallMe
+  getUserBetterCallMe,
+  getBookingConsultations,
 };
