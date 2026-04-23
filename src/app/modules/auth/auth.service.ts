@@ -15,6 +15,7 @@ import { User } from '../user/user.model';
 import { IUser } from '../user/user.interface';
 import generateOTP from '../../../util/generateOTP';
 import { ICreateAccount } from '../../../types/emailTamplate';
+import { Notification } from '../notification/notification.mode';
 
 //login
 const loginUserFromDB = async (payload: ILoginData) => {
@@ -60,6 +61,14 @@ const loginUserFromDB = async (payload: ILoginData) => {
   if (userInfo && userInfo.password) {
     userInfo.password = undefined as any;
   }
+
+  Notification.create({
+    receiver: userInfo._id.toString(),
+    title: 'Login Successful',
+    message: 'You have successfully logged in to your account',
+    refId: userInfo._id,
+    path: '/dashboard',
+  })
   return { data: { accessToken: createToken, userInfo } };
 };
 
@@ -287,7 +296,6 @@ const resendEmailToDB = async (email: string) => {
 const verifyOTP = async (otp: string) => {
   const registeredUser = await User.findOne({ 'authorization.oneTimeCode': otp }).lean();
 
-  console.log(otp);
   if (!registeredUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'User not found');
   }

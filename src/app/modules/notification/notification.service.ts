@@ -4,10 +4,15 @@ import QueryBuilder from '../../builder/QueryBuilder';
 import { Notification } from './notification.mode';
 import { NotificationCount } from './notificationCountModel';
 
-const getMyNotifications = async (userId: string, query: Record<string, any>) => {
+const getMyNotifications = async (
+  userId: string,
+  query: Record<string, any>,
+) => {
   const notificationQuery = new QueryBuilder(
-    Notification.find({ receiver: userId },'-deleteReferenceId').populate('sender', 'name image').lean(),
-    query
+    Notification.find({ receiver: userId }, '-deleteReferenceId')
+      .populate('sender', 'name image')
+      .lean(),
+    query,
   )
     .paginate()
     .fields()
@@ -15,11 +20,12 @@ const getMyNotifications = async (userId: string, query: Record<string, any>) =>
     .sort();
 
   const notifications = await notificationQuery.modelQuery;
-
-  const unreadCount = await Notification.countDocuments({ recipient: userId, seen: false });
+  const unreadCount = await Notification.countDocuments({
+    recipient: userId,
+    seen: false,
+  });
 
   const pagination = await notificationQuery.getPaginationInfo();
-
   return {
     data: notifications,
     pagination,
@@ -31,25 +37,30 @@ const markAsSeen = async (userId: string, notificationId: string) => {
   const notification = await Notification.findByIdAndUpdate(
     notificationId,
     { seen: true },
-    { new: true }
+    { new: true },
   ).lean();
 
   if (!notification) {
-    throw new ApiError(StatusCodes.NOT_FOUND, 'Notification not found or access denied');
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      'Notification not found or access denied',
+    );
   }
-  
 
   return notification;
 };
 
-
-
 const notificationUnreadCount = async (userId: string) => {
   let notification = await NotificationCount.findOne({ user: userId }).lean();
-
   if (!notification) {
-    const createdNotification = await NotificationCount.create({ user: userId, count: 0 });
-    notification = createdNotification.toJSON ? createdNotification.toJSON() : createdNotification;
+    const createdNotification = await NotificationCount.create({
+      user: userId,
+      count: 0,
+    });
+
+    notification = createdNotification.toJSON
+      ? createdNotification.toJSON()
+      : createdNotification;
   }
 
   return notification;
@@ -59,11 +70,38 @@ const updateNotificationCount = async (userId: string) => {
   const notification = await NotificationCount.findOneAndUpdate(
     { user: userId },
     { count: 0 },
-    { new: true }
-  )
+    { new: true },
+  );
+
   if (!notification) {
-    throw new ApiError(StatusCodes.NOT_FOUND, 'Notification not found or access denied');
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      'Notification not found or access denied',
+    );
   }
+
+  return notification;
+};
+
+const deleteNotification = async (userId: string, notificationId: string) => {
+  const notification = await Notification.findOneAndDelete({
+    _id: notificationId,
+    receiver: userId
+  });
+
+  if (!notification) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      'Notification not found or access denied',
+    );
+  }
+
+  // Update notification count for receiver
+  await NotificationCount.findOneAndUpdate(
+    { user: userId },
+    { $inc: { count: -1 } },
+    { new: true }
+  );
 
   return notification;
 };
@@ -72,5 +110,6 @@ export const NotificationService = {
   getMyNotifications,
   markAsSeen,
   notificationUnreadCount,
-  updateNotificationCount
+  updateNotificationCount,
+  deleteNotification,
 };

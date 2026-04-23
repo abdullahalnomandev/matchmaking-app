@@ -311,7 +311,6 @@ const getMatchableCompanies = async (currentUser: {
     // Get current user's company data to use for matching
     const userCompany = await Company.findOne({ owner: currentUser.id }).lean();
     
-    console.log('Current user has company:', !!userCompany);
     
     // Merge user profile with company data for matching
     const currentUserForMatching = {
@@ -419,12 +418,6 @@ const getMatchableCompanies = async (currentUser: {
     
     // Get all potential matches (no pagination yet)
     const potentialMatches = await companyQuery.lean();
-    
-    console.log(`Found ${potentialMatches.length} potential company matches for user ${currentUser.id}`);
-    console.log('Current user role:', currentUser.role);
-    console.log('Current user ID:', currentUser.id);
-    console.log('Current user company data:', userCompany);
-    console.log('Current user merged data:', currentUserForMatching);
     
     // Debug: Log each potential match
     potentialMatches.forEach((company, index) => {

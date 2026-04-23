@@ -118,10 +118,9 @@ const createUserToDB = async (payload: Partial<IUser>): Promise<IUser> => {
 };
 
 const getUserProfileFromDB = async (user: JwtPayload): Promise<any> => {
-  const { id } = user;
 
   // Only unselect the arrays but still need to count their lengths, so will fetch their counts
-  const isExistUser = await User.findById(id, '-status -authorization').lean();
+  const isExistUser = await User.findById(user.id, '-status -authorization').lean();
 
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
@@ -146,13 +145,16 @@ const getUserProfileFromDB = async (user: JwtPayload): Promise<any> => {
     !isExistUser.personality_scores?.last_taken ||
     new Date().getTime() - isExistUser.personality_scores.last_taken >
       60 * 24 * 60 * 60 * 1000; // 60 days or less
-      
+
+  const companies = await Company.find({owner:isExistUser._id});
+
   return {
     ...isExistUser,
     rank_score: Math.round(totalRakingScore),
     rank_level: userRank(Math.round(totalRakingScore) || 0),
     can_give_psychological_test,
-    can_give_personality_test
+    can_give_personality_test,
+    companies
   };
 };
 
@@ -233,10 +235,13 @@ const getUserProfileByIdFromDB = async (
     Math.round(isExistUser.ranking_score?.activity || 0));
 
   // Return all user data + totals + isConnectedToNetwork
+    const companies = await Company.find({owner:isExistUser._id});
+
   return {
     ...isExistUser,
     rank_score: Math.round(totalRakingScore),
     rank_level: userRank(Math.round(totalRakingScore) || 0),
+    companies
   };
 };
 

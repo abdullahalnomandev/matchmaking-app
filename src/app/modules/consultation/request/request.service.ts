@@ -10,6 +10,8 @@ import { StatusCodes } from 'http-status-codes';
 import ApiError from '../../../../errors/ApiError';
 import { userRank } from '../../user/user.util';
 import { Consultation } from '../consultation.model';
+import { NotificationService } from '../../notification/notification.service';
+import { Notification } from '../../notification/notification.mode';
 
 // Create consultation request
 const createConsultationRequest = async (
@@ -26,10 +28,27 @@ const createConsultationRequest = async (
       'Consultation request already exists',
     );
   }
-  return await ConsultationRequest.create({
+
+  const consultationRequest = await ConsultationRequest.create({
     ...payload,
     request_user,
   });
+
+  await consultationRequest.populate('consultation');
+  await consultationRequest.populate('consultation.creator');
+
+  // Create notification for consultation creator
+  const consultation = consultationRequest.consultation as any;
+  Notification.create({
+    receiver: consultation.creator._id.toString(),
+    sender: request_user,
+    title: 'New Consultation Request',
+    message: 'You have received a new consultation request',
+    refId: consultation._id.toString(),
+    path: `/consultations/${consultation._id}`
+  });
+
+  return consultationRequest;
 };
 
 // Get all consultation requests
@@ -65,7 +84,7 @@ const getConsultationRequestsByUser = async (
   const consultations = await Consultation.find({ creator: userId });
   const consultationQuery = new QueryBuilder(
     ConsultationRequest.find({
-      consultation: { $in: consultations.map((c) => c._id) },
+      consultation: { $in: consultations.map(c => c._id) },
       status: 'pending',
     }),
     query,
@@ -100,8 +119,8 @@ const getConsultationRequestsByUser = async (
             (item.request_user.ranking_score?.personality || 0) +
             (item.request_user.ranking_score?.experience || 0) +
             (item.request_user.ranking_score?.turnover || 0) +
-            (item.request_user.ranking_score?.activity || 0)
-        ) || 0
+            (item.request_user.ranking_score?.activity || 0),
+        ) || 0,
       ),
     })),
     pagination,
@@ -123,11 +142,11 @@ const getConsultationRequestById = async (requestId: string) => {
     .lean()
     .then((item: any) => {
       const totalRankingScore =
-        (Math.round(item?.request_user?.ranking_score?.psychological || 0) +
-          Math.round(item?.request_user?.ranking_score?.personality || 0) +
-          Math.round(item?.request_user?.ranking_score?.experience || 0) +
-          Math.round(item?.request_user?.ranking_score?.turnover || 0) +
-          Math.round(item?.request_user?.ranking_score?.activity || 0));
+        Math.round(item?.request_user?.ranking_score?.psychological || 0) +
+        Math.round(item?.request_user?.ranking_score?.personality || 0) +
+        Math.round(item?.request_user?.ranking_score?.experience || 0) +
+        Math.round(item?.request_user?.ranking_score?.turnover || 0) +
+        Math.round(item?.request_user?.ranking_score?.activity || 0);
       return {
         ...item,
         rank: userRank(Math.round(totalRankingScore) || 0),
@@ -141,12 +160,59 @@ const updateConsultationRequest = async (
   payload: IUpdateConsultationRequestPayload,
 ) => {
   console.log(requestId, payload);
-  return await ConsultationRequest.findByIdAndUpdate(requestId, payload, {
-    new: true,
-    runValidators: true,
-  })
+  const updatedRequest = await ConsultationRequest.findByIdAndUpdate(
+    requestId,
+    payload,
+    {
+      new: true,
+      runValidators: true,
+    },
+  )
     .populate('consultation')
+    .populate('consultation.creator', 'name email image')
     .populate('request_user', 'name email image role');
+
+  // Create notification for accepted requests
+  if (
+    payload.status === 'accepted' &&
+    updatedRequest?.consultation &&
+    updatedRequest?.request_user
+  ) {
+    const consultation = updatedRequest.consultation as any;
+    const requestUser = updatedRequest.request_user as any;
+
+    Notification.create({
+      receiver: requestUser._id.toString(),
+      sender: consultation.creator?._id?.toString(),
+      title: 'Consultation Request Accepted',
+      message: 'Your consultation request has been accepted',
+      refId: consultation._id.toString(),
+      path: `/consultations/${consultation._id}`,
+      reason: 'consultation_request_accepted',
+    });
+  }
+
+  // Create notification for rejected requests
+  if (
+    payload.status === 'rejected' &&
+    updatedRequest?.consultation &&
+    updatedRequest?.request_user
+  ) {
+    const consultation = updatedRequest.consultation as any;
+    const requestUser = updatedRequest.request_user as any;
+
+    Notification.create({
+      receiver: requestUser._id.toString(),
+      sender: consultation.creator?._id?.toString(),
+      title: 'Consultation Request Rejected',
+      message: 'Your consultation request has been declined',
+      refId: consultation._id.toString(),
+      path: `/consultations/${consultation._id}`,
+      reason: 'consultation_request_rejected',
+    });
+  }
+
+  return updatedRequest;
 };
 
 // Delete consultation request

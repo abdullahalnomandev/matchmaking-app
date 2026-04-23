@@ -127,8 +127,11 @@ const createConversation = async ({
 //     };
 // };
 
-const getAllConversaions = async (query: Record<string, any>, userId: string) => {
-  const search = query.searchTerm || "";
+const getAllConversaions = async (
+  query: Record<string, any>,
+  userId: string,
+) => {
+  const search = query.searchTerm || '';
   const limit = Number(query.limit) || 10;
   const page = Number(query.page) || 1;
   const skip = (page - 1) * limit;
@@ -138,48 +141,45 @@ const getAllConversaions = async (query: Record<string, any>, userId: string) =>
   const pipeline: any[] = [
     {
       $match: {
-        $or: [
-          { creator: userObjectId },
-          { participant: userObjectId },
-        ],
+        $or: [{ creator: userObjectId }, { participant: userObjectId }],
       },
     },
 
     // 👇 JOIN USERS
     {
       $lookup: {
-        from: "users",
-        localField: "creator",
-        foreignField: "_id",
-        as: "creator",
+        from: 'users',
+        localField: 'creator',
+        foreignField: '_id',
+        as: 'creator',
       },
     },
-    { $unwind: "$creator" },
-    { $project: { "creator.password": 0 } }, // remove password
+    { $unwind: '$creator' },
+    { $project: { 'creator.password': 0 } }, // remove password
 
     {
       $lookup: {
-        from: "users",
-        localField: "participant",
-        foreignField: "_id",
-        as: "participant",
+        from: 'users',
+        localField: 'participant',
+        foreignField: '_id',
+        as: 'participant',
       },
     },
-    { $unwind: "$participant" },
-    { $project: { "participant.password": 0 } }, // remove password
+    { $unwind: '$participant' },
+    { $project: { 'participant.password': 0 } }, // remove password
 
     // 👇 JOIN MESSAGE
     {
       $lookup: {
-        from: "messages",
-        localField: "lastMessage",
-        foreignField: "_id",
-        as: "lastMessage",
+        from: 'messages',
+        localField: 'lastMessage',
+        foreignField: '_id',
+        as: 'lastMessage',
       },
     },
     {
       $unwind: {
-        path: "$lastMessage",
+        path: '$lastMessage',
         preserveNullAndEmptyArrays: true,
       },
     },
@@ -190,9 +190,9 @@ const getAllConversaions = async (query: Record<string, any>, userId: string) =>
     pipeline.push({
       $match: {
         $or: [
-          { "creator.name": { $regex: search, $options: "i" } },
-          { "participant.name": { $regex: search, $options: "i" } },
-          { "lastMessage.text": { $regex: search, $options: "i" } },
+          { 'creator.name': { $regex: search, $options: 'i' } },
+          { 'participant.name': { $regex: search, $options: 'i' } },
+          { 'lastMessage.text': { $regex: search, $options: 'i' } },
         ],
       },
     });
@@ -205,7 +205,7 @@ const getAllConversaions = async (query: Record<string, any>, userId: string) =>
   pipeline.push({
     $facet: {
       data: [{ $skip: skip }, { $limit: limit }],
-      totalCount: [{ $count: "count" }],
+      totalCount: [{ $count: 'count' }],
     },
   });
 
@@ -219,22 +219,22 @@ const getAllConversaions = async (query: Record<string, any>, userId: string) =>
     const otherUser =
       conv.creator._id.toString() !== userId
         ? {
+            _id: conv.participant?._id,
             name: conv.creator.name,
             image: conv.creator.image,
-            email: conv.creator.email.split("@")[0],
+            email: conv.creator.email.split('@')[0],
           }
         : {
+            _id: conv.participant?._id,
             name: conv.participant.name,
             image: conv.participant.image,
-            email: conv.participant.email.split("@")[0],
+            email: conv.participant.email.split('@')[0],
           };
 
     return {
       _id: conv._id,
       participant: otherUser,
-      lastMessage: conv.lastMessage
-        ? { text: conv.lastMessage.text }
-        : null,
+      lastMessage: conv.lastMessage ? { text: conv.lastMessage.text } : null,
       updatedAt: conv.updatedAt,
     };
   });

@@ -38,7 +38,6 @@ const getAllChatRoomsFromDB = async (
     
     const businessArea = company.business_area;
     
-    console.log('businessArea',businessArea)
     // Find all support areas that are relevant to this business area
     for (const [supportArea, businessAreas] of Object.entries(SUPPORT_TO_BUSINESS_MAP)) {
       if (businessAreas.includes(businessArea)) {

@@ -298,12 +298,14 @@ const deleteConsultation = async (consultationId: string, userId: string) => {
   return consultation;
 };
 
-const getUserBetterCallMe = async (query: IConsultationFilters) => {
+const getUserBetterCallMe = async (query: IConsultationFilters , userId:string) => {
   console.log(query);
   const today = dayjs().startOf('day').toDate();
   const role = query?.role || USER_ROLES.BUSINESS_USER;
 
-  // ✅ build query
+  // Get user ID from query (assuming it's passed as userId parameter)
+
+  // Build query
   const consultationQuery = new QueryBuilder(
     Consultation.find({
       scheduledDate: { $gte: today },
@@ -371,14 +373,29 @@ const getUserBetterCallMe = async (query: IConsultationFilters) => {
     })
     .populate({
       path: 'creator',
-      match: { role }, // 👈 filter by creator.role
+      match: { role }, // filter by creator.role
       select: 'name email image role ranking_score',
     });
 
-  // ✅ execute query
+  // execute query
   let data = await consultationQuery.modelQuery.lean();
 
-  // Add rank_score and rank_level to each consultation
+  // Get user's consultation requests if userId is provided
+  let userRequests: any[] = [];
+  if (userId) {
+    userRequests = await ConsultationRequest.find({
+      request_user: userId,
+      consultation: { $in: data.map((c: any) => c._id) }
+    }).select('consultation status');
+  }
+
+  // Create a map of consultation ID to user's request status
+  const userRequestStatusMap: Record<string, string> = {};
+  userRequests.forEach(request => {
+    userRequestStatusMap[request.consultation.toString()] = request.status;
+  });
+
+  // Add rank_score, rank_level, and user's request status to each consultation
   data = data.map((consultation: any) => {
     const totalRakingScore =
       Math.round(consultation.creator?.ranking_score?.psychological || 0) +
@@ -387,6 +404,8 @@ const getUserBetterCallMe = async (query: IConsultationFilters) => {
       Math.round(consultation.creator?.ranking_score?.turnover || 0) +
       Math.round(consultation.creator?.ranking_score?.activity || 0);
 
+    const userRequestStatus = userRequestStatusMap[consultation._id.toString()] || 'not_requested';
+
     return {
       ...consultation,
       creator: {
@@ -394,13 +413,14 @@ const getUserBetterCallMe = async (query: IConsultationFilters) => {
         rank_score: Math.round(totalRakingScore),
         rank_level: userRank(Math.round(totalRakingScore) || 0),
       },
+      userRequestStatus, // Add user's request status
     };
   });
 
-  // ❗ remove unmatched (important)
+  // remove unmatched (important)
   data = data.filter(item => item.company && item.creator);
 
-  // ✅ Get accurate pagination info after filtering
+  // Get accurate pagination info after filtering
   const page = Number(query.page) || 1;
   const limit = Number(query.limit) || 10;
   const skip = (page - 1) * limit;
