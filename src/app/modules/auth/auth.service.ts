@@ -109,13 +109,6 @@ const verifyEmailToDB = async (otp: string) => {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'OTP is not valid.');
   }
 
-  if (registeredUser.verified) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      'This account already verified'
-    );
-  }
-
   // Check if authentication, OTP, and expireAt exist
   if (!registeredUser?.authorization?.oneTimeCode) {
     throw new ApiError(
@@ -128,6 +121,7 @@ const verifyEmailToDB = async (otp: string) => {
   if (registeredUser?.authorization?.oneTimeCode !== otp) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid OTP');
   }
+  
 
   // Check OTP expiry
   const now = new Date();
@@ -144,7 +138,7 @@ const verifyEmailToDB = async (otp: string) => {
     {
       $set: {
         verified: true,
-        'authorization.oneTimeCode': null,
+        // 'authorization.oneTimeCode': null,
         'authorization.expireAt': null,
       },
     },
@@ -174,6 +168,8 @@ const resetPasswordToDB = async (payload: IAuthResetPassword) => {
   const { newPassword, confirmPassword, otp } = payload;
   //isExist token
   const isExistToken = await User.findOne({ 'authorization.oneTimeCode': otp });
+  console.log(otp);
+  console.log(isExistToken);
   if (!isExistToken) {
     throw new ApiError(StatusCodes.UNAUTHORIZED, 'Token is not valid!');
   }
@@ -263,13 +259,6 @@ const changePasswordToDB = async (
 const resendEmailToDB = async (email: string) => {
   const registeredUser = await User.findOne({ email }).lean();
 
-  if (registeredUser?.verified) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      'This account already verified'
-    );
-  }
-
   if (!registeredUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'User not found');
   }
@@ -286,7 +275,7 @@ const resendEmailToDB = async (email: string) => {
   // Save OTP and expiry to DB
   const authorization = {
     oneTimeCode: otp,
-    expireAt: new Date(Date.now() + 3 * 60000),
+    expireAt: new Date(Date.now() + 5 * 60000),
   };
   await User.findByIdAndUpdate(registeredUser._id, { $set: { authorization } });
 
@@ -300,13 +289,6 @@ const verifyOTP = async (otp: string) => {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'User not found');
   }
 
-  if (registeredUser?.verified) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      'This account already verified'
-    );
-  }
-
   // Check if OTP is valid and not expired
   if (
     !registeredUser.authorization ||
@@ -316,7 +298,7 @@ const verifyOTP = async (otp: string) => {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'OTP is expired');
   }
 
-  return { message: 'OTP is valid' };
+  return registeredUser;
 };
 
 export const AuthService = {

@@ -58,7 +58,7 @@ const createUserToDB = async (payload: Partial<IUser>): Promise<IUser> => {
   const otp = generateOTP();
   const authorization = {
     oneTimeCode: otp.toString(),
-    expireAt: new Date(Date.now() + 3 * 60000),
+    expireAt: new Date(Date.now() + 5 * 60000),
   };
 
   // ADD EXPERIENCE AND TURNOVER WEIGHT

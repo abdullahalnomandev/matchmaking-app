@@ -7,6 +7,7 @@ import { User } from '../user/user.model';
 import { SUPPORT_TO_BUSINESS_MAP } from '../../../enums/business';
 import { WebinarType } from './webinar.constant';
 import { Company } from '../company/company.model';
+import { USER_ROLES } from '../../../enums/user';
 
 const createWebinarToDB = async (
   payload: Partial<IWebinar>,
@@ -56,6 +57,7 @@ const createWebinarToDB = async (
 const getAllWebinarsFromDB = async (
   query: Record<string, unknown>,
   userId: string,
+  userRole: string
 ): Promise<{ data: IWebinar[]; meta: any }> => {
   const companies = await Company.find(
     { owner: userId },
@@ -72,24 +74,18 @@ const getAllWebinarsFromDB = async (
 
   const relevantSupportAreasSet = new Set<string>();
 
-  for (const businessArea of businessAreas) {
-    for (const [supportArea, businessList] of Object.entries(
-      SUPPORT_TO_BUSINESS_MAP,
-    )) {
-      if (businessList.includes(businessArea)) {
-        relevantSupportAreasSet.add(supportArea);
-      }
-    }
-  }
-
   const relevantSupportAreas = Array.from(relevantSupportAreasSet);
 
-  query.isPublished = true;
+  const baseQuery: any = {
+    isPublished: true
+  };
 
-  const baseQuery: any = {};
-
-  if (relevantSupportAreas.length > 0) {
-    baseQuery.supportArea = { $in: relevantSupportAreas };
+  if (userRole === USER_ROLES.SUPPORT_PARTNER) {
+    baseQuery.creator = userId;
+  } else {
+    if (relevantSupportAreas.length > 0) {
+      baseQuery.supportArea = { $in: relevantSupportAreas };
+    }
   }
 
   const queryBuilder = new QueryBuilder(Webinar.find(baseQuery), query)

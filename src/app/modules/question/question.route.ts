@@ -11,7 +11,7 @@ router.post(
   auth(
     USER_ROLES.ADMIN,
     USER_ROLES.BUSINESS_USER,
-    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.SUPPORT_PARTNER,
     USER_ROLES.SUPER_ADMIN,
   ),
   QuestionController.createPsychologicalTestQuestions,
@@ -22,7 +22,7 @@ router.post(
   auth(
     USER_ROLES.ADMIN,
     USER_ROLES.BUSINESS_USER,
-    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.SUPPORT_PARTNER,
     USER_ROLES.SUPER_ADMIN,
   ),
   QuestionController.createPersonalityTestQuestions,

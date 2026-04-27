@@ -30,7 +30,7 @@ const createWebinar = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllWebinars = catchAsync(async (req: Request, res: Response) => {
-  const result = await WebinarService.getAllWebinarsFromDB(req.query as Record<string, unknown>, req.user?.id || '');
+  const result = await WebinarService.getAllWebinarsFromDB(req.query as Record<string, unknown>, req.user?.id || '', req?.user?.role);
   
   sendResponse(res, {
     success: true,

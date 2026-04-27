@@ -29,7 +29,7 @@ const createNewsletter = catchAsync(async (req: Request, res: Response) => {
 
 const getAllNewsletters = catchAsync(async (req: Request, res: Response) => {
 
-  const result = await NewsletterService.getAllNewslettersFromDB(req.query as Record<string, unknown>, req.user?.id || '');
+  const result = await NewsletterService.getAllNewslettersFromDB(req.query as Record<string, unknown>, req.user?.id || '',req.user?.role || '');
   
   sendResponse(res, {
     success: true,

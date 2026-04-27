@@ -6,6 +6,7 @@ import QueryBuilder from '../../builder/QueryBuilder';
 import { User } from '../user/user.model';
 import { SUPPORT_TO_BUSINESS_MAP } from '../../../enums/business';
 import { Company } from '../company/company.model';
+import { USER_ROLES } from '../../../enums/user';
 
 const createNewsletterToDB = async (
   payload: Partial<INewsletter>,
@@ -19,40 +20,50 @@ const createNewsletterToDB = async (
 const getAllNewslettersFromDB = async (
   query: Record<string, unknown>,
   userId: string,
+  role: string,
 ): Promise<{ data: INewsletter[]; meta: any }> => {
-  const companies = await Company.find({ owner: userId }, 'business_area');
-  console.log('Found companies for user', userId, ':', companies.length);
-  
-  const filterArea: string[] = [];
+  const user = await User.findById(userId);
+  console.log('Found user:', user);
 
-  companies.forEach((company) => {
-    console.log('Company data:', company);
-    if (!company.business_area) {
-      console.log('Skipping company - no business area:', company._id);
-      return; // Skip if no business area
-    }
-    
-    const businessArea = company.business_area;
-    console.log('Processing business area:', businessArea);
-    
-    // Find all support areas that are relevant to this business area
-    Object.entries(SUPPORT_TO_BUSINESS_MAP).forEach(([supportArea, businessAreas]) => {
-      if (businessAreas.includes(businessArea)) {
-        console.log('Found relevant support area:', supportArea, 'for business area:', businessArea);
-        filterArea.push(supportArea);
+  // Check user role
+  let baseQuery = {};
+  
+  if (role === USER_ROLES.SUPPORT_PARTNER) {
+    console.log(
+      'User role is support area. Showing newsletters created by her',
+    );
+    baseQuery = { createdBy: userId };
+  } else {
+    const companies = await Company.find({ owner: userId }, 'business_area');
+    console.log('Found companies for user', userId, ':', companies.length);
+
+    const filterArea: string[] = [];
+
+    companies.forEach(company => {
+      console.log('Company data:', company);
+      if (!company.business_area) {
+        return;
       }
+
+      const businessArea = company.business_area;
+
+      Object.entries(SUPPORT_TO_BUSINESS_MAP).forEach(
+        ([supportArea, businessAreas]) => {
+          if (businessAreas.includes(businessArea)) {
+            filterArea.push(supportArea);
+          }
+        },
+      );
     });
-  });
-  
-  console.log('Final filter areas (relevant support areas):', filterArea);
 
-  // Set default filter for active newsletters
-  query.isActive = true;
+    console.log('Final filter areas (relevant support areas):', filterArea);
 
-  const queryBuilder = new QueryBuilder(
-    Newsletter.find({ area: { $in: filterArea } }),
-    query,
-  )
+    // Set default filter for active newsletters
+    baseQuery = { area: { $in: filterArea } };
+  }
+
+  console.log('Base query:', baseQuery);
+  const queryBuilder = new QueryBuilder(Newsletter.find(baseQuery), query)
     .search(['title', 'content'])
     .filter()
     .paginate()
